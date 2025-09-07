@@ -1,0 +1,7 @@
+<h1>Novo grupo</h1>
+<form method="post">
+  {% csrf_token %}
+  <label>Nome: <input type="text" name="name"></label><br>
+  <label>Descrição: <textarea name="description"></textarea></label><br>
+  <button type="submit">Criar</button>
+</form>

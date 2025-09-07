@@ -1,0 +1,11 @@
+<h1>{{ game }}</h1>
+<p>Data: {{ game.date }} | Local: {{ game.location }} | Buy-in: {{ game.buy_in }}</p>
+<h2>Participações</h2>
+<ul>
+  {% for p in participations %}
+    <li>{{ p.player }} — saldo final: {{ p.final_balance }}</li>
+  {% empty %}
+    <li>Ninguém adicionado ainda.</li>
+  {% endfor %}
+</ul>
+<p><a href="{% url 'core:participation_add' game.pk %}">+ Adicionar participação</a></p>

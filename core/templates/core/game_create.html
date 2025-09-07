@@ -1,0 +1,12 @@
+<h1>Nova partida</h1>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <fieldset>
+    <legend>Postar em grupos</legend>
+    {% for g in groups %}
+      <label><input type="checkbox" name="groups" value="{{ g.id }}"> {{ g.name }}</label><br>
+    {% endfor %}
+  </fieldset>
+  <button type="submit">Criar partida</button>
+</form>
