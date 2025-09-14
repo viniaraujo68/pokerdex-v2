@@ -1,0 +1,35 @@
+<!-- templates/core/group_detail.html -->
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ group.name }} — Grupo</title>
+</head>
+<body>
+  <h1>{{ group.name }}</h1>
+  {% if group.description %}<p>{{ group.description }}</p>{% endif %}
+  <p>Criado por: {{ group.created_by }} em {{ group.created_at|date:"d/m/Y H:i" }}</p>
+
+  <h2>Partidas recentes ({{ total_posts }})</h2>
+  {% if recent_posts %}
+    <ul>
+      {% for post in recent_posts %}
+        <li>
+          <strong>{{ post.game.title|default:"Partida" }}</strong>
+          — {{ post.game.date|date:"d/m/Y" }}
+          — buy-in: R$ {{ post.game.buy_in }}
+          <br>
+          <small>postado por {{ post.posted_by }} em {{ post.posted_at|date:"d/m/Y H:i" }}</small>
+          <br>
+          <a href="{% url 'core:game_detail' post.game.pk %}">ver detalhes da partida</a>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if total_posts > recent_posts|length %}
+      <p><em>Há mais partidas antigas… (você pode paginar depois)</em></p>
+    {% endif %}
+  {% else %}
+    <p>Nenhuma partida postada neste grupo ainda.</p>
+  {% endif %}
+</body>
+</html>
