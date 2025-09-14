@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>Cadastro</title>
+</head>
+<body>
+  <h1>Criar conta</h1>
+
+  {% if form.errors %}
+    <div style="color:red;">{{ form.errors }}</div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <p>Já tem conta? <a href="{% url 'core:login' %}">Entrar</a></p>
+</body>
+</html>
