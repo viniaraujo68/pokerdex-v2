@@ -1,0 +1,16 @@
+<h1>Grupos</h1>
+<p><a href="{% url 'core:group_create' %}">+ Criar grupo</a></p>
+<ul>
+  {% for g in groups %}
+    <li>
+      <a href="{% url 'core:group_detail' g.slug %}"><strong>{{ g.name }}</strong></a>
+      <span style="color: #666;">— criado por {{ g.created_by }}</span>
+      {% if g.description %}
+        <br><span style="font-size: 90%; color: #888;">{{ g.description|truncatechars:80 }}</span>
+      {% endif %}
+    </li>
+  {% empty %}
+    <li>Nenhum grupo.</li>
+  {% endfor %}
+</ul>
+<p><a href="{% url 'core:game_create' %}">+ Nova partida</a></p>
