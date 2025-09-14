@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>Entrar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <h1>Entrar</h1>
+
+  {% if form.non_field_errors %}
+    <div style="color: red;">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  <form method="post" action="">
+    {% csrf_token %}
+
+    <div>
+      <label for="{{ form.username.id_for_label }}">Usuário</label>
+      {{ form.username }}
+      {{ form.username.errors }}
+    </div>
+
+    <div>
+      <label for="{{ form.password.id_for_label }}">Senha</label>
+      {{ form.password }}
+      {{ form.password.errors }}
+    </div>
+
+    <div>
+      <label>
+        {{ form.remember_me }} {{ form.remember_me.label }}
+      </label>
+    </div>
+
+    {# preserve o redirecionamento da página protegida #}
+    {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+
+    <button type="submit">Entrar</button>
+  </form>
+</body>
+</html>
