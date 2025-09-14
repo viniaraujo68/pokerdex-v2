@@ -1,0 +1,18 @@
+from django.urls import path
+from . import views
+from django.contrib.auth.views import LogoutView
+
+app_name = 'core'
+
+urlpatterns = [
+    path('', views.GroupListView.as_view(), name='group_list'),
+    path("account/signup/", views.signup_view, name="signup"),
+    path("account/login/", views.RememberMeLoginView.as_view(), name="login"),
+    path("account/logout/", views.logout_view, name="logout"),
+    path('groups/', views.GroupListView.as_view(), name='group_list'),
+    path("groups/<slug:slug>/", views.GroupDetailView.as_view(), name="group_detail"),
+    path('create/group', views.group_create_view, name='group_create'),
+    path('create/game', views.game_create_view, name='game_create'),
+    path('games/<int:pk>/', views.game_detail_view, name='game_detail'),
+    path('games/<int:pk>/add-player/', views.participation_add_view, name='participation_add'),
+]
