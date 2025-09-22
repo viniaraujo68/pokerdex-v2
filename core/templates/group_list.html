@@ -8,6 +8,11 @@
       {% if g.description %}
         <br><span style="font-size: 90%; color: #888;">{{ g.description|truncatechars:80 }}</span>
       {% endif %}
+      |
+      <form action="{% url 'core:group_delete' g.slug %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" onclick="return confirm('Tem certeza que deseja deletar este grupo?');" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Excluir</button>
+      </form>
     </li>
   {% empty %}
     <li>Nenhum grupo.</li>

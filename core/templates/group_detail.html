@@ -1,4 +1,3 @@
-<!-- templates/core/group_detail.html -->
 <!doctype html>
 <html lang="pt-br">
 <head>
@@ -6,30 +5,61 @@
   <title>{{ group.name }} — Grupo</title>
 </head>
 <body>
-  <h1>{{ group.name }}</h1>
-  {% if group.description %}<p>{{ group.description }}</p>{% endif %}
-  <p>Criado por: {{ group.created_by }} em {{ group.created_at|date:"d/m/Y H:i" }}</p>
+{% if request.user.is_authenticated %}
+  {% if is_member %}
+    <h1>{{ group.name }}</h1>
+    {% if group.description %}<p>{{ group.description }}</p>{% endif %}
+    <p>Criado por: {{ group.created_by }} em {{ group.created_at|date:"d/m/Y H:i" }}</p>
 
-  <h2>Partidas recentes ({{ total_posts }})</h2>
-  {% if recent_posts %}
-    <ul>
-      {% for post in recent_posts %}
-        <li>
-          <strong>{{ post.game.title|default:"Partida" }}</strong>
-          — {{ post.game.date|date:"d/m/Y" }}
-          — buy-in: R$ {{ post.game.buy_in }}
-          <br>
-          <small>postado por {{ post.posted_by }} em {{ post.posted_at|date:"d/m/Y H:i" }}</small>
-          <br>
-          <a href="{% url 'core:game_detail' post.game.pk %}">ver detalhes da partida</a>
-        </li>
-      {% endfor %}
-    </ul>
-    {% if total_posts > recent_posts|length %}
-      <p><em>Há mais partidas antigas… (você pode paginar depois)</em></p>
+    <h2>Participantes ({{ players|length }})</h2>
+    {% if players %}
+      <ul>
+        {% for player in players %}
+          <li>{{ player.username }}{% if player == group.created_by %} <strong>(criador)</strong>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Nenhum participante neste grupo ainda.</p>
+    {% endif %}
+    <!-- Delete Group Button -->
+    <form action="{% url 'core:group_delete' group.slug %}" method="post" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" onclick="return confirm('Tem certeza que deseja deletar este grupo?');" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Excluir</button>
+    </form>
+    <form action="{% url 'core:group_leave' slug=group.slug %}" method="post" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit">Sair do grupo</button>
+    </form>
+    <h2>Partidas recentes ({{ total_posts }})</h2>
+    {% if recent_posts %}
+      <ul>
+        {% for post in recent_posts %}
+          <li>
+            <strong>{{ post.game.title|default:"Partida" }}</strong>
+            — {{ post.game.date|date:"d/m/Y" }}
+            — Buy-in: R$ {{ post.game.buy_in }}
+            <br>
+            <small>postado por {{ post.posted_by }} em {{ post.posted_at|date:"d/m/Y H:i" }}</small>
+            <br>
+            <a href="{% url 'core:game_detail' post.game.pk %}">ver detalhes da partida</a>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if total_posts > recent_posts|length %}
+        <p><em>Há mais partidas antigas… (você pode paginar depois)</em></p>
+      {% endif %}
+    {% else %}
+      <p>Nenhuma partida postada neste grupo ainda.</p>
     {% endif %}
   {% else %}
-    <p>Nenhuma partida postada neste grupo ainda.</p>
+    <form action="{% url 'core:group_join' slug=group.slug %}" method="post" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit">Entrar no grupo</button>
+    </form>
   {% endif %}
+{% else %}
+  <p><a href="{% url 'core:login' %}?next={{ request.path }}">Faça login</a> para participar.</p>
+{% endif %}
+
 </body>
 </html>
