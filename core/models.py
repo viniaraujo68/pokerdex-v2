@@ -13,7 +13,7 @@ class Group(models.Model):
     Todo usuário pode criar novos grupos. O criador vira admin automaticamente.
     """
     name = models.CharField(max_length=120, unique=True)
-    slug = models.SlugField(max_length=140, unique=True, blank=True)
+    slug = models.SlugField(max_length=140, unique=True, blank=False)
     description = models.TextField(blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="groups_created")
     created_at = models.DateTimeField(default=timezone.now)
