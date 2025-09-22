@@ -24,6 +24,7 @@ INSTALLED_APPS = [
 ]
 
 LOGIN_REDIRECT_URL = "core:group_list"
+LOGIN_URL = '/account/login'
 LOGOUT_REDIRECT_URL = "core:group_list"
 
 MIDDLEWARE = [
