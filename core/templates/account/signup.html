@@ -1,23 +1,49 @@
-<!doctype html>
-<html lang="pt-br">
-<head>
-  <meta charset="utf-8" />
-  <title>Cadastro</title>
-</head>
-<body>
-  <h1>Criar conta</h1>
+{% extends "base.html" %}
 
-  {% if form.errors %}
-    <div style="color:red;">{{ form.errors }}</div>
-  {% endif %}
+{% block title %}Criar conta{% endblock %}
 
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
+{% block content %}
+<div class="d-flex justify-content-center">
+  <div class="card bg-dark border-secondary text-light" style="max-width: 520px; width: 100%;">
+    <div class="card-body">
+      <h1 class="h4 text-warning mb-3">📝 Criar conta</h1>
+      <p class="text-muted small mb-4">Preencha os campos abaixo para acessar o Pokerdex.</p>
 
-    <button type="submit">Cadastrar</button>
-  </form>
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2 mb-3">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
 
-  <p>Já tem conta? <a href="{% url 'core:login' %}">Entrar</a></p>
-</body>
-</html>
+      <form method="post" class="d-flex flex-column gap-3">
+        {% csrf_token %}
+
+        {% for field in form %}
+          <div>
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <div class="form-text text-muted">{{ field.help_text }}</div>
+            {% endif %}
+            {% for error in field.errors %}
+              <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+
+
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-sm btn-warning">Cadastrar</button>
+        </div>
+      </form>
+
+      <div class="text-muted small mt-3">
+        Já tem conta?
+        <a class="text-decoration-none text-warning signup-login-link" href="{% url 'core:login' %}">
+          Entrar
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,6 +1,68 @@
-<h1>Nova partida</h1>
-<form method="post">
+{% extends "base.html" %}
+
+{% block title %}Nova Partida{% endblock %}
+
+{% block content %}
+<div class="card bg-dark border-secondary text-light">
+  <div class="card-body">
+    <h1 class="h4 text-warning mb-3">➕ Nova Partida</h1>
+    <p class="text-muted small mb-4">
+      Preencha os dados da partida abaixo para registrar no sistema.
+    </p>
+
+<form method="post" class="d-flex flex-column gap-3">
   {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Criar partida</button>
+
+  {% for field in form %}
+    {% if field.name == "groups" %}
+      <div class="mb-3">
+        <label class="form-label">Postar em grupos</label>
+
+        <div class="toggle-group d-flex flex-wrap gap-2">
+          {# Itera pelos subwidgets (cada checkbox) #}
+        {% for cb in field %}
+          {{ cb.tag }}  {# deixa o Django gerar o <input> corretamente #}
+          <label for="{{ cb.id_for_label }}" class="toggle-btn">
+            {{ cb.choice_label }}
+          </label>
+        {% endfor %}
+        </div>
+
+        {% for error in field.errors %}
+          <div class="invalid-feedback d-block">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+    {% elif field.field.widget.input_type == "checkbox" %}
+      <div class="form-check">
+        {{ field }}
+        <label class="form-check-label ms-1">{{ field.label }}</label>
+        {% for error in field.errors %}
+          <div class="invalid-feedback d-block">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+    {% else %}
+      <div class="mb-3">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+          <div class="form-text text-muted">{{ field.help_text }}</div>
+        {% endif %}
+        {% for error in field.errors %}
+          <div class="invalid-feedback d-block">{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  <div class="d-flex justify-content-end">
+    <a href="{% url 'core:group_list' %}" class="btn btn-sm btn-outline-light me-2">Cancelar</a>
+    <button type="submit" class="btn btn-sm btn-warning">Criar partida</button>
+  </div>
 </form>
+
+
+  </div>
+</div>
+{% endblock %}

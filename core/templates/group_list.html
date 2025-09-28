@@ -1,21 +1,68 @@
-<h1>Grupos</h1>
-<p><a href="{% url 'core:group_create' %}">+ Criar grupo</a></p>
-<ul>
-  {% for g in groups %}
-    <li>
-      <a href="{% url 'core:group_detail' g.slug %}"><strong>{{ g.name }}</strong></a>
-      <span style="color: #666;">— criado por {{ g.created_by }}</span>
-      {% if g.description %}
-        <br><span style="font-size: 90%; color: #888;">{{ g.description|truncatechars:80 }}</span>
-      {% endif %}
-      |
-      <form action="{% url 'core:group_delete' g.slug %}" method="post" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit" onclick="return confirm('Tem certeza que deseja deletar este grupo?');" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Excluir</button>
-      </form>
-    </li>
-  {% empty %}
-    <li>Nenhum grupo.</li>
-  {% endfor %}
-</ul>
-<p><a href="{% url 'core:game_create' %}">+ Nova partida</a></p>
+{% extends "base.html" %}
+
+{% block title %}Grupos Pokerdex{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 m-0">Grupos</h1>
+  <a href="{% url 'core:group_create' %}" class="btn btn-sm btn-primary">
+    + Criar grupo
+  </a>
+</div>
+
+{% if groups %}
+  <div class="row g-3">
+    {% for g in groups %}
+      <div class="col-md-4 col-sm-6">
+        <a href="{% url 'core:group_detail' g.slug %}"
+           class="card card-hover bg-dark border-secondary text-light h-100 card-link position-relative">
+          
+          <form action="{% url 'core:group_delete' g.slug %}" method="post"
+                class="delete-form">
+            {% csrf_token %}
+            <button type="submit"
+                    class="btn btn-sm btn-outline-danger"
+                    onclick="return confirm('Tem certeza que deseja deletar este grupo? Essa ação é irreversível.');">
+              🗑
+            </button>
+          </form>
+
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title mb-1 text-warning">{{ g.name }}</h5>
+
+            <p class="card-subtitle mb-2 small">
+              criado por {{ g.created_by }} · {{ g.member_count }} membro{% if g.member_count != 1 %}s{% endif %}
+            </p>
+
+            {% if g.description %}
+              <p class="card-text text-truncate-2 mb-3">
+                {{ g.description }}
+              </p>
+            {% endif %}
+
+            <span class="badge bg-secondary align-self-start">
+              {{ g.post_count }} jogo{% if g.post_count != 1 %}s{% endif %}
+            </span>
+          </div>
+
+          <div class="last-post">
+            {% if g.last_post %}
+              <i>Última partida em: {{ g.last_post|date:"d M Y, H:i" }}</i>
+            {% else %}
+              <i>Sem jogos ainda</i>
+            {% endif %}
+          </div>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-secondary">Nenhum grupo.</div>
+{% endif %}
+
+<div class="mt-3">
+  <a href="{% url 'core:game_create' %}" class="btn btn-outline-warning">
+    + Nova partida
+  </a>
+</div>
+{% endblock %}

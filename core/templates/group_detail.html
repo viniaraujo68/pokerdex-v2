@@ -1,65 +1,179 @@
-<!doctype html>
-<html lang="pt-br">
-<head>
-  <meta charset="utf-8" />
-  <title>{{ group.name }} — Grupo</title>
-</head>
-<body>
-{% if request.user.is_authenticated %}
-  {% if is_member %}
-    <h1>{{ group.name }}</h1>
-    {% if group.description %}<p>{{ group.description }}</p>{% endif %}
-    <p>Criado por: {{ group.created_by }} em {{ group.created_at|date:"d/m/Y H:i" }}</p>
+{% extends "base.html" %}
 
-    <h2>Participantes ({{ players|length }})</h2>
-    {% if players %}
-      <ul>
-        {% for player in players %}
-          <li>{{ player.username }}{% if player == group.created_by %} <strong>(criador)</strong>{% endif %}</li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p>Nenhum participante neste grupo ainda.</p>
-    {% endif %}
-    <!-- Delete Group Button -->
-    <form action="{% url 'core:group_delete' group.slug %}" method="post" style="display:inline;">
-      {% csrf_token %}
-      <button type="submit" onclick="return confirm('Tem certeza que deseja deletar este grupo?');" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Excluir</button>
-    </form>
-    <form action="{% url 'core:group_leave' slug=group.slug %}" method="post" style="display:inline;">
-      {% csrf_token %}
-      <button type="submit">Sair do grupo</button>
-    </form>
-    <h2>Partidas recentes ({{ total_posts }})</h2>
-    {% if recent_posts %}
-      <ul>
-        {% for post in recent_posts %}
-          <li>
-            <strong>{{ post.game.title|default:"Partida" }}</strong>
-            — {{ post.game.date|date:"d/m/Y" }}
-            — Buy-in: R$ {{ post.game.buy_in }}
-            <br>
-            <small>postado por {{ post.posted_by }} em {{ post.posted_at|date:"d/m/Y H:i" }}</small>
-            <br>
-            <a href="{% url 'core:game_detail' post.game.pk %}">ver detalhes da partida</a>
-          </li>
-        {% endfor %}
-      </ul>
-      {% if total_posts > recent_posts|length %}
-        <p><em>Há mais partidas antigas… (você pode paginar depois)</em></p>
+{% block title %}{{ group.name }}{% endblock %}
+
+{% block content %}
+
+<div class="position-sticky back-btn">
+  <a href="{% url 'core:group_list' %}"
+     class="back-link d-inline-flex align-items-center text-decoration-none">
+    <span class="chev" aria-hidden="true">
+      <!-- Chevron SVG 100% inline, sem dependências -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16">
+        <path fill="currentColor" fill-rule="evenodd"
+              d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+      </svg>
+    </span>
+    <span class="label">Grupos</span>
+  </a>
+</div>
+
+<div class="group-hero card bg-dark border-secondary text-light mb-3">
+  <div class="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+    <div class="flex-grow-1">
+      <h1 class="h3 text-warning mb-1">{{ group.name }}</h1>
+      {% if group.description %}
+        <p class="group-description mb-2">{{ group.description }}</p>
       {% endif %}
-    {% else %}
-      <p>Nenhuma partida postada neste grupo ainda.</p>
-    {% endif %}
-  {% else %}
-    <form action="{% url 'core:group_join' slug=group.slug %}" method="post" style="display:inline;">
-      {% csrf_token %}
-      <button type="submit">Entrar no grupo</button>
-    </form>
+      <p class="small text-muted m-0">
+        Criado por <span class="text-reset">{{ group.created_by }}</span>
+        em {{ group.created_at|date:"d/m/Y" }} às {{ group.created_at|date:"H:i" }}
+      </p>
+    </div>
+
+    <div class="ms-md-auto d-flex flex-wrap gap-2">
+      {% if request.user.is_authenticated and is_member %}
+        {% if is_admin %}
+          <!-- Botão Excluir (admin) -->
+          <form action="{% url 'core:group_delete' group.slug %}" method="post" class="m-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger"
+                    onclick="return confirm('Tem certeza que deseja deletar este grupo? Essa ação é irreversível.');">
+              🗑 Excluir grupo
+            </button>
+          </form>
+        {% endif %}
+
+        <!-- Sair do grupo -->
+        <form action="{% url 'core:group_leave' slug=group.slug %}" method="post" class="m-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-light">Sair do grupo</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if request.user.is_authenticated and is_member %}
+  <div class="row g-3 align-items-start">
+
+    <!-- Participantes -->
+    <div class="col-lg-4">
+      <div class="card bg-dark border-secondary text-light">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Participantes <span class="badge bg-secondary">{{ players|length }}</span></h2>
+
+          {% if players %}
+            <ul class="list-group list-group-flush">
+              {% for player in players %}
+                <li class="list-group-item bg-dark text-light d-flex justify-content-between align-items-center">
+                  <span>{{ player.username }}</span>
+                  {% if player == group.created_by %}
+                    <span class="badge bg-warning text-dark">criador</span>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">Nenhum participante neste grupo ainda.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Partidas recentes -->
+    <div class="col-lg-8">
+      <div class="card bg-dark border-secondary text-light position-relative">
+        <div class="card-body d-flex flex-column">
+          <h2 class="h5 mb-3">
+            Partidas recentes
+            <span class="badge bg-secondary">{{ total_posts }}</span>
+          </h2>
+
+          {% if recent_posts %}
+            <ul class="list-group list-group-flush">
+              {% for post in recent_posts %}
+                <a href="{% url 'core:game_detail' post.game.pk %}?from_group={{ group.slug }}"
+                  class="list-group-item list-group-item-action card-hover text-light text-decoration-none">
+                <div class="fw-semibold text-warning">
+                  {{ post.game.title|default:"Partida" }}
+                </div>
+                <div class="small text-muted">
+                  {{ post.game.date|date:"d/m/Y" }} · Buy-in: R$ {{ post.game.buy_in }}
+                </div>
+                <div class="small text-muted">
+                  postado por {{ post.posted_by }} em {{ post.posted_at|date:"d/m/Y H:i" }}
+                </div>
+              </a>
+              {% endfor %}
+            </ul>
+
+            {% if total_posts > recent_posts|length %}
+              <p class="small text-muted mt-2"><em>Há mais partidas antigas… (pagine depois)</em></p>
+            {% endif %}
+          {% else %}
+            <div class="text-muted">Nenhuma partida postada neste grupo ainda.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if is_admin and join_requests %}
+    <!-- Solicitações pendentes -->
+    <div class="card bg-dark border-secondary text-light mt-3 card-hover">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Solicitações de entrada pendentes</h2>
+        <ul class="list-group list-group-flush">
+          {% for req in join_requests %}
+            <li class="list-group-item bg-dark text-light d-flex justify-content-between align-items-center">
+              <div class="small">
+                <strong>{{ req.requested_by.username }}</strong>
+                <span class="text-muted"> · {{ req.requested_at|date:"d/m/Y H:i" }}</span>
+              </div>
+              <div class="d-flex gap-2">
+                <form action="{% url 'core:group_approve_request' slug=group.slug request_id=req.id %}" method="post" class="m-0">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-success">Aprovar</button>
+                </form>
+                <form action="{% url 'core:group_reject_request' slug=group.slug request_id=req.id %}" method="post" class="m-0">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Rejeitar</button>
+                </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
   {% endif %}
+
 {% else %}
-  <p><a href="{% url 'core:login' %}?next={{ request.path }}">Faça login</a> para participar.</p>
+  <!-- Visitante ou usuário não membro -->
+  <div class="d-flex justify-content-center text-center text-light">
+    <div style="max-width: 480px;">
+      <h2 class="h5 mb-2">Você não participa deste grupo.</h2>
+      <p class="mb-3">Entre no grupo para ver as partidas e interagir.</p>
+
+      {% if request.user.is_authenticated %}
+        {% if already_requested %}
+          <div class="alert alert-warning mb-3">
+            ⏳ Sua solicitação de entrada foi enviada. Aguarde aprovação de um administrador.
+          </div>
+          <a href="{% url 'core:group_join_request' slug=group.slug %}" class="btn btn-warning">
+            Ver status da solicitação
+          </a>
+        {% else %}
+          <form action="{% url 'core:group_join_request' slug=group.slug %}" method="get" class="m-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning">Solicitar entrada</button>
+          </form>
+        {% endif %}
+      {% else %}
+        <a class="btn btn-outline-light" href="{% url 'core:login' %}?next={{ request.path }}">Entrar</a>
+      {% endif %}
+    </div>
+  </div>
 {% endif %}
 
-</body>
-</html>
+{% endblock %}
