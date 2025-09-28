@@ -1,11 +1,84 @@
-<h1>{{ game }}</h1>
-<p>Data: {{ game.date }} | Local: {{ game.location }} | Buy-in: {{ game.buy_in }}</p>
-<h2>Participações</h2>
-<ul>
-  {% for p in participations %}
-    <li>{{ p.player }} — saldo final: {{ p.final_balance }}</li>
-  {% empty %}
-    <li>Ninguém adicionado ainda.</li>
-  {% endfor %}
-</ul>
-<p><a href="{% url 'core:participation_add' game.pk %}">+ Adicionar participação</a></p>
+{% extends "base.html" %}
+
+{% block title %}{{ game }}{% endblock %}
+
+{% block content %}
+
+{% if back_group %}
+<div class="position-sticky back-btn">
+  <a href="{% url 'core:group_detail' slug=back_group.slug %}"
+     class="back-link d-inline-flex align-items-center text-decoration-none">
+    <span class="chev" aria-hidden="true">
+      <!-- Chevron SVG 100% inline, sem dependências -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16">
+        <path fill="currentColor" fill-rule="evenodd"
+              d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+      </svg>
+    </span>
+    <span class="label">{{ back_group.name }}</span>
+  </a>
+</div>
+{% endif %}
+
+<div class="card bg-dark border-secondary text-light mb-3">
+  <div class="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+    <div class="flex-grow-1">
+      <h1 class="h4 text-warning mb-2">{{ game }}</h1>
+
+      <div class="d-flex flex-wrap gap-2">
+        <span class="chip chip-neutral" title="Data">📅 {{ game.date|date:"d/m/Y" }}</span>
+        {% if game.location %}
+          <span class="chip chip-neutral" title="Local">📍 {{ game.location }}</span>
+        {% endif %}
+        <span class="chip chip-gold" title="Buy-in">💰 R$ {{ game.buy_in }}</span>
+      </div>
+    </div>
+
+    <!-- Botão só aparece se já houver participações -->
+    {% if participations %}
+      <div class="ms-md-auto d-flex gap-2">
+        <a href="{% url 'core:participation_add' game.pk %}" class="btn btn-sm btn-outline-warning">
+          + Adicionar participação
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if not participations %}
+  <!-- Bloco centralizado quando não há participações -->
+  <div class="text-center my-4">
+    <p class="mb-3">Nenhuma participação ainda.</p>
+    <a href="{% url 'core:participation_add' game.pk %}" class="btn btn-warning">
+      + Adicionar participação
+    </a>
+  </div>
+{% endif %}
+
+<!-- Card da lista de participações (mostra vazio amigável quando não houver) -->
+{% if participations %}
+<div class="card bg-dark border-secondary text-light card-hover">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h5 m-0">Participações</h2>
+      <span class="badge bg-secondary">{{ participations|length }}</span>
+    </div>
+
+      <ul class="list-group list-group-flush">
+        {% for p in participations %}
+          <li class="list-group-item text-light d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <span class="player-pill">{{ p.player }}</span>
+            </div>
+            <div class="text-end">
+              <div class="amount {% if p.final_balance > game.buy_in %}amount-win{% elif p.final_balance < game.buy_in %}amount-loss{% else %}amount-even{% endif %}">
+                R$ {{ p.final_balance }}
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
