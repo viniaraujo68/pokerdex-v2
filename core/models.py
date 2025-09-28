@@ -15,6 +15,7 @@ class Group(models.Model):
     name = models.CharField(max_length=120, unique=True)
     slug = models.SlugField(max_length=140, unique=True, blank=False)
     description = models.TextField(blank=True)
+    # image = models.ImageField("Foto do grupo", upload_to="groups/", blank=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="groups_created")
     created_at = models.DateTimeField(default=timezone.now)
 
@@ -87,13 +88,33 @@ class GroupInvite(models.Model):
         return f"Invite({target}) -> {self.group}"
 
 
+class GroupRequest(models.Model):
+    """
+    Pedido de um usuário para entrar em um grupo.
+    Pode ser aceito ou rejeitado por um admin do grupo.
+    """
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="join_requests")
+    requested_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="group_requests")
+    message = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+
+    class Meta:
+        unique_together = ("group", "requested_by")
+        indexes = [
+            models.Index(fields=["group"]),
+            models.Index(fields=["requested_by"]),
+        ]
+
+    def __str__(self):
+        return f"Request({self.requested_by} -> {self.group})"
 class Game(models.Model):
     """
     Uma partida de poker. Pode ser postada em 1+ grupos.
     """
-    title = models.CharField(max_length=140, blank=True)
-    date = models.DateField(default=timezone.localdate)
-    location = models.CharField(max_length=180, blank=True)
+    title = models.CharField("Nome da partida", max_length=140, blank=True)
+    date = models.DateField("Data", default=timezone.localdate)
+    location = models.CharField("Local",max_length=180, blank=True)
     buy_in = models.DecimalField(
         "Cacife (buy-in)", max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
     )
@@ -107,8 +128,8 @@ class Game(models.Model):
         ordering = ["-date", "-created_at"]
 
     def __str__(self):
-        label = self.title or f"Partida em {self.date}"
-        return f"{label} - buy-in {self.buy_in}"
+        label = self.title or f"Partida em {self.date.strftime('%d/%m/%Y')}"
+        return f"{label}"
 
 
 class GamePost(models.Model):
@@ -137,8 +158,8 @@ class GameParticipation(models.Model):
     'final_balance' é o resultado líquido do jogador (pode ser negativo).
     """
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="participations")
-    player = models.ForeignKey(User, on_delete=models.PROTECT, related_name="game_participations")
-    final_balance = models.DecimalField(max_digits=10, decimal_places=2)
+    player = models.ForeignKey(User, verbose_name="Jogador", on_delete=models.PROTECT, related_name="game_participations")
+    final_balance = models.DecimalField(max_digits=10, verbose_name="Stack final", decimal_places=2)
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
