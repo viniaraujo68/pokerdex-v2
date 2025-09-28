@@ -3,24 +3,50 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout
 from django.contrib import messages
-from django.db.models import Prefetch
+from django.db import IntegrityError, models, transaction
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView
-from .forms import GameForm, GameParticipationForm
-from .forms import LoginForm, SignUpForm
-from .models import Group, GroupMembership, Game, GamePost, GameParticipation
+from .forms import GameForm, GameParticipationForm, LoginForm, SignUpForm, GroupForm
+from .models import Group, GroupMembership, Game, GamePost, GameParticipation, GroupRequest
 from .services import create_group_with_admin
+from django.http import HttpResponseForbidden
 
-# @method_decorator(login_required, name='dispatch')
-class GroupListView(ListView):
-    template_name = "group_list.html"
-    context_object_name = "groups"
+def group_admin_required(view_func):
+    def _wrapped_view(request, slug, *args, **kwargs):
+        group = get_object_or_404(Group, slug=slug)
+        is_admin = GroupMembership.objects.filter(
+            group=group, user=request.user, role=GroupMembership.Role.ADMIN
+        ).exists()
+        if not is_admin:
+            return HttpResponseForbidden("Você não é admin deste grupo.")
+        return view_func(request, slug, *args, **kwargs)
+    return _wrapped_view
 
-    def get_queryset(self):
-        return [gm.group for gm in GroupMembership.objects.filter(user=self.request.user)]
+
+@login_required
+def group_list_view(request):
+    groups = (
+        Group.objects
+        .filter(
+            id__in=GroupMembership.objects
+                .filter(user=request.user)
+                .values("group_id")
+        )
+        .select_related("created_by")
+        .annotate(
+            member_count=models.Count("memberships", distinct=True),
+            post_count=models.Count("posts", distinct=True),
+            last_post=models.Max("posts__posted_at"),
+        )
+        .order_by("name")
+    )
+    group_b = groups.filter(name="b").first()
+    print("TODOS OS GRUPOS:", list(Group.objects.all())[6].slug)
+    print("Grupo com nome 'b':", group_b)
+    return render(request, "group_list.html", {"groups": groups})
 
 # @method_decorator(login_required, name='dispatch')
 class GroupDetailView(DetailView):
@@ -35,7 +61,7 @@ class GroupDetailView(DetailView):
                     .select_related("game", "posted_by", "group")
                     .order_by("-posted_at"))
         return (Group.objects
-                .prefetch_related(Prefetch("posts", queryset=posts_qs))
+                .prefetch_related(models.Prefetch("posts", queryset=posts_qs))
                 )
 
     def get_context_data(self, **kwargs):
@@ -43,7 +69,10 @@ class GroupDetailView(DetailView):
         posts = self.object.posts.all()
         players = [gm.user for gm in GroupMembership.objects.filter(group=self.object).select_related("user")]
         is_member = GroupMembership.objects.filter(user=self.request.user, group=self.object).exists()
-
+        is_admin = GroupMembership.objects.filter(user=self.request.user, group=self.object, role=GroupMembership.Role.ADMIN).exists()
+        context["already_requested"] = GroupRequest.objects.filter(group=self.object, requested_by=self.request.user).exists()
+        context["is_admin"] = is_admin
+        context["join_requests"] = GroupRequest.objects.filter(group=self.object).select_related("requested_by") if is_admin else []
         context["recent_posts"] = posts[:10]
         context["recent_games"] = [p.game for p in context["recent_posts"]]
         context["total_posts"] = posts.count()
@@ -55,37 +84,116 @@ class GroupDetailView(DetailView):
 @login_required
 def group_create_view(request):
     if request.method == "POST":
-        name = request.POST.get("name", "").strip()
-        description = request.POST.get("description", "").strip()
-        if not name:
-            messages.error(request, "Informe um nome para o grupo.")
-        else:
-            group = create_group_with_admin(name=name, created_by=request.user, description=description)
-            messages.success(request, "Grupo criado!")
-            return HttpResponseRedirect(reverse("core:group_list"))
-    return render(request, "group_create.html")
+        form = GroupForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    create_group_with_admin(
+                        name=form.cleaned_data["name"],
+                        description=form.cleaned_data.get("description", ""),
+                        created_by=request.user,
+                    )
+            except IntegrityError:
+                # Conflito de unicidade do banco (corrida, etc.)
+                form.add_error("name", "Já existe um grupo com este nome.")
+                # NÃO usar messages.error aqui; o erro já aparece no campo.
+            else:
+                messages.success(request, "Grupo criado!")
+                return redirect(reverse("core:group_list"))
+        # Se form inválido: apenas cair para o render com os errors nos campos.
+    else:
+        form = GroupForm()
+
+    return render(request, "group_create.html", {"form": form})
 
 @login_required
-def group_join_view(request, slug):
+def group_join_request_view(request, slug):
+    if request.method != "GET":
+        messages.error(request, "Operação inválida.")
+        return redirect("core:group_detail", slug=slug)
+
+    try:
+        group = (
+            Group.objects
+            .select_related("created_by")
+            .annotate(member_count=models.Count("memberships__user", distinct=True))
+            .get(slug=slug)  # <- agora é uma instância, não um QuerySet
+        )
+    except Group.DoesNotExist:
+        messages.error(request, "Grupo não encontrado.")
+        return redirect("core:group_list")  # ajuste para sua rota de listagem
+    # except Group.MultipleObjectsReturned:  # só se slug não for único
+    #     messages.error(request, "Slug de grupo não é único.")
+    #     return redirect("core:group_list")
+
+    membership = GroupMembership.objects.filter(group=group, user=request.user).exists()
+    if membership:
+        messages.info(request, f"Você já é membro de “{group.name}”.")
+        return redirect("core:group_detail", slug=slug)
+
+    invite = GroupRequest.objects.filter(group=group, requested_by=request.user).first()
+    print("INVITES: ", GroupRequest.objects.filter())
+    print("INVITE: ", invite)
+    return render(
+        request,
+        "group_request.html",
+        context={
+            "already_member": membership,
+            "already_requested": bool(invite),
+            "group": group,
+        },
+    )
+
+@login_required
+def group_create_join_request_view(request, slug):
     if request.method != "POST":
         messages.error(request, "Operação inválida.")
         return redirect("core:group_detail", slug=slug)
 
     group = get_object_or_404(Group, slug=slug)
 
-    # Evita duplicado; torna a operação idempotente
-    membership, created = GroupMembership.objects.get_or_create(
-        user=request.user,
-        group=group,
-        defaults={"role": GroupMembership.Role.MEMBER},
-    )
-
-    if created:
-        messages.success(request, f"Você entrou no grupo “{group.name}”.")
-    else:
+    membership = GroupMembership.objects.filter(group=group, user=request.user).exists()
+    if membership:
         messages.info(request, f"Você já é membro de “{group.name}”.")
+        return redirect("core:group_detail", slug=slug)
+
+    invite = GroupRequest.objects.filter(group=group, requested_by=request.user).first()
+    if invite:
+        messages.info(request, f"Você já solicitou para entrar em “{group.name}”. Aguarde aprovação.")
+        return redirect("core:group_detail", slug=slug)
+    
+    GroupRequest.objects.create(group=group, requested_by=request.user)
+    return render(request, "group_request.html", context={"already_member": membership, "already_requested": invite, "group": group})
+
+@login_required
+@group_admin_required
+def group_accept_request_view(request, slug, request_id):
+    if request.method != "POST":
+        messages.error(request, "Operação inválida.")
+        return redirect("core:group_detail", slug=slug)
+
+    group = get_object_or_404(Group, slug=slug)
+    join_request = get_object_or_404(GroupRequest, id=request_id, group=group)
+
+    # Adiciona o usuário ao grupo
+    GroupMembership.objects.get_or_create(user=join_request.requested_by, group=group, defaults={"role": GroupMembership.Role.MEMBER})
+    GroupRequest.objects.filter(id=request_id).delete()
+    messages.success(request, f"Pedido de {join_request.requested_by.username} aceito. Ele agora é membro de “{group.name}”.")
     return redirect("core:group_detail", slug=slug)
 
+@login_required
+@group_admin_required
+def group_reject_request_view(request, slug, request_id):
+    if request.method != "POST":
+        messages.error(request, "Operação inválida.")
+        return redirect("core:group_detail", slug=slug)
+
+    group = get_object_or_404(Group, slug=slug)
+    join_request = get_object_or_404(GroupRequest, id=request_id, group=group)
+
+    GroupRequest.objects.filter(id=request_id).delete()
+    messages.info(request, f"Pedido de {join_request.requested_by.username} rejeitado.")
+    return redirect("core:group_detail", slug=slug)
 
 @login_required
 def group_leave_view(request, slug):
@@ -147,27 +255,56 @@ def game_create_view(request):
 
 def game_detail_view(request, pk: int):
     game = get_object_or_404(Game, pk=pk)
+
+    from_group = request.GET.get("from_group")
+
+    session_key = f"last_group_for_game_{pk}"
+    if from_group:
+        request.session[session_key] = from_group
+    else:
+        from_group = request.session.get(session_key)
+
+    back_group = None
+    if from_group:
+        is_valid = GamePost.objects.filter(
+            game=game,
+            group__slug=from_group,
+        ).exists()
+
+        if is_valid:
+            back_group = Group.objects.only("name", "slug").filter(slug=from_group).first()
+        else:
+            request.session.pop(session_key, None)
+
     participations = game.participations.select_related("player").all()
-    return render(request, "game_detail.html", {"game": game, "participations": participations})
+
+    return render(
+        request,
+        "game_detail.html",
+        {
+            "game": game,
+            "participations": participations,
+            "back_group": back_group,  # <- para o botão de voltar
+        },
+    )
 
 
 @login_required
 def participation_add_view(request, pk: int):
-    """
-    Adiciona um jogador e seu saldo final a uma partida.
-    """
     game = get_object_or_404(Game, pk=pk)
     if request.method == "POST":
-        form = GameParticipationForm(request.POST)
+        form = GameParticipationForm(request.POST, game=game)
         if form.is_valid():
-            participation = form.save(commit=False)
-            participation.game = game
-            participation.save()
-            messages.success(request, "Participação adicionada!")
-            return HttpResponseRedirect(reverse("core:game_detail", args=[game.pk]))
+            try:
+                form.save()
+                return redirect("core:game_detail", pk=game.pk)
+            except IntegrityError:
+                # Corrida/conflito de unicidade: devolve erro amigável
+                form.add_error("player", "Este jogador já foi adicionado a esta partida.")
     else:
-        form = GameParticipationForm()
-    return render(request, "participation_add.html", {"game": game, "form": form})
+        form = GameParticipationForm(game=game)
+
+    return render(request, "participation_add.html", {"form": form, "game": game})
 
 
 class RememberMeLoginView(LoginView):
