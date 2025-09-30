@@ -66,24 +66,23 @@ from .models import GameParticipation
 class GameParticipationForm(forms.ModelForm):
     class Meta:
         model = GameParticipation
-        fields = ["player", "final_balance"]
+        fields = ["player", "final_balance", "rebuy"]
 
     def __init__(self, *args, game=None, **kwargs):
         super().__init__(*args, **kwargs)
-        # 1) Defina o jogo cedo para o full_clean() considerar unique_together
         self.game = game or getattr(self.instance, "game", None)
         if self.game:
-            self.instance.game = self.game  # 👈 chave do problema
+            self.instance.game = self.game
 
     def clean_player(self):
         player = self.cleaned_data.get("player")
-        game = getattr(self.instance, "game", None)  # já setado no __init__
+        game = getattr(self.instance, "game", None)
 
         if not player or not game:
             return player
 
         qs = GameParticipation.objects.filter(game=game, player=player)
-        if self.instance.pk:               # edição: ignore a própria linha
+        if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
 
         if qs.exists():
