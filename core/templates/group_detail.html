@@ -3,21 +3,6 @@
 {% block title %}{{ group.name }}{% endblock %}
 
 {% block content %}
-
-<div class="position-sticky back-btn">
-  <a href="{% url 'core:group_list' %}"
-     class="back-link d-inline-flex align-items-center text-decoration-none">
-    <span class="chev" aria-hidden="true">
-      <!-- Chevron SVG 100% inline, sem dependências -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16">
-        <path fill="currentColor" fill-rule="evenodd"
-              d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
-      </svg>
-    </span>
-    <span class="label">Grupos</span>
-  </a>
-</div>
-
 <div class="group-hero card bg-dark border-secondary text-light mb-3">
   <div class="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
     <div class="flex-grow-1">
@@ -34,7 +19,6 @@
     <div class="ms-md-auto d-flex flex-wrap gap-2">
       {% if request.user.is_authenticated and is_member %}
         {% if is_admin %}
-          <!-- Botão Excluir (admin) -->
           <form action="{% url 'core:group_delete' group.slug %}" method="post" class="m-0">
             {% csrf_token %}
             <button type="submit" class="btn btn-sm btn-outline-danger"
@@ -44,7 +28,6 @@
           </form>
         {% endif %}
 
-        <!-- Sair do grupo -->
         <form action="{% url 'core:group_leave' slug=group.slug %}" method="post" class="m-0">
           {% csrf_token %}
           <button type="submit" class="btn btn-sm btn-outline-light">Sair do grupo</button>
@@ -57,19 +40,53 @@
 {% if request.user.is_authenticated and is_member %}
   <div class="row g-3 align-items-start">
 
-    <!-- Participantes -->
     <div class="col-lg-4">
       <div class="card bg-dark border-secondary text-light">
         <div class="card-body">
-          <h2 class="h5 mb-3">Participantes <span class="badge bg-secondary">{{ players|length }}</span></h2>
+          <h2 class="h5 mb-3">
+            Participantes
+            <span class="badge bg-secondary">{{ memberships|length }}</span>
+          </h2>
 
-          {% if players %}
+          {% if memberships %}
             <ul class="list-group list-group-flush">
-              {% for player in players %}
+              {% for gm in memberships %}
                 <li class="list-group-item bg-dark text-light d-flex justify-content-between align-items-center">
-                  <span>{{ player.username }}</span>
-                  {% if player == group.created_by %}
-                    <span class="badge bg-warning text-dark">criador</span>
+                  <div class="d-flex align-items-center gap-2">
+                    <span>{{ gm.user.username }}</span>
+
+                    {% if gm.user == group.created_by %}
+                      <i class="bi bi-award text-warning" title="Criador"></i>
+                    {% elif gm.role == gm.Role.ADMIN %}
+                      <i class="bi bi-shield text-info" title="Administrador"></i>
+                    {% else %}
+                      <i class="bi bi-person text-secondary" title="Membro"></i>
+                    {% endif %}
+                  </div>
+
+
+                  {% if is_admin %}
+                    <div class="d-flex gap-2">
+                      {% if gm.user != group.created_by and gm.user != request.user %}
+                        {% if gm.role == gm.Role.ADMIN %}
+                          <form action="{% url 'core:group_demote_admin' slug=group.slug user_id=gm.user.id %}" method="post" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-warning">Rebaixar</button>
+                          </form>
+                        {% else %}
+                          <form action="{% url 'core:group_promote_member' slug=group.slug user_id=gm.user.id %}" method="post" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-success">Promover</button>
+                          </form>
+                        {% endif %}
+
+                        <form action="{% url 'core:group_remove_member' slug=group.slug user_id=gm.user.id %}" method="post" class="m-0"
+                              onsubmit="return confirm('Remover {{ gm.user.username }} do grupo?');">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-outline-danger">Remover</button>
+                        </form>
+                      {% endif %}
+                    </div>
                   {% endif %}
                 </li>
               {% endfor %}
@@ -81,7 +98,6 @@
       </div>
     </div>
 
-    <!-- Partidas recentes -->
     <div class="col-lg-8">
       <div class="card bg-dark border-secondary text-light position-relative">
         <div class="card-body d-flex flex-column">
@@ -93,18 +109,18 @@
           {% if recent_posts %}
             <ul class="list-group list-group-flush">
               {% for post in recent_posts %}
-                <a href="{% url 'core:game_detail' post.game.pk %}?from_group={{ group.slug }}"
-                  class="list-group-item list-group-item-action card-hover text-light text-decoration-none">
-                <div class="fw-semibold text-warning">
-                  {{ post.game.title|default:"Partida" }}
-                </div>
-                <div class="small text-muted">
-                  {{ post.game.date|date:"d/m/Y" }} · Buy-in: R$ {{ post.game.buy_in }}
-                </div>
-                <div class="small text-muted">
-                  postado por {{ post.posted_by }} em {{ post.posted_at|date:"d/m/Y H:i" }}
-                </div>
-              </a>
+                <a href="{% url 'core:game_detail' post.game.pk %}"
+                   class="list-group-item list-group-item-action card-hover text-light text-decoration-none">
+                  <div class="fw-semibold text-warning">
+                    {{ post.game.title|default:"Partida" }}
+                  </div>
+                  <div class="small text-muted">
+                    {{ post.game.date|date:"d/m/Y" }} · Buy-in: R$ {{ post.game.buy_in }}
+                  </div>
+                  <div class="small text-muted">
+                    postado por {{ post.posted_by }} em {{ post.posted_at|date:"d/m/Y H:i" }}
+                  </div>
+                </a>
               {% endfor %}
             </ul>
 
@@ -120,7 +136,6 @@
   </div>
 
   {% if is_admin and join_requests %}
-    <!-- Solicitações pendentes -->
     <div class="card bg-dark border-secondary text-light mt-3 card-hover">
       <div class="card-body">
         <h2 class="h5 mb-3">Solicitações de entrada pendentes</h2>
@@ -149,7 +164,6 @@
   {% endif %}
 
 {% else %}
-  <!-- Visitante ou usuário não membro -->
   <div class="d-flex justify-content-center text-center text-light">
     <div style="max-width: 480px;">
       <h2 class="h5 mb-2">Você não participa deste grupo.</h2>
@@ -175,5 +189,4 @@
     </div>
   </div>
 {% endif %}
-
 {% endblock %}

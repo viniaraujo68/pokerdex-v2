@@ -1,9 +1,11 @@
 from tokenize import group
+from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login, logout
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import IntegrityError, models, transaction
+from django.db.models import Case, When, Value, IntegerField
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
@@ -48,7 +50,6 @@ def group_list_view(request):
     print("Grupo com nome 'b':", group_b)
     return render(request, "group_list.html", {"groups": groups})
 
-# @method_decorator(login_required, name='dispatch')
 class GroupDetailView(DetailView):
     model = Group
     template_name = "group_detail.html"
@@ -67,18 +68,122 @@ class GroupDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         posts = self.object.posts.all()
-        players = [gm.user for gm in GroupMembership.objects.filter(group=self.object).select_related("user")]
+
+
+        memberships = (
+            GroupMembership.objects
+            .filter(group=self.object)
+            .select_related("user")
+            .annotate(
+                role_order=Case(
+                    When(user=self.object.created_by, then=Value(0)),  # criador
+                    When(role=GroupMembership.Role.ADMIN, then=Value(1)),
+                    When(role=GroupMembership.Role.MEMBER, then=Value(2)),
+                    default=Value(3),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("role_order", "user__username")
+        )
+
+
         is_member = GroupMembership.objects.filter(user=self.request.user, group=self.object).exists()
         is_admin = GroupMembership.objects.filter(user=self.request.user, group=self.object, role=GroupMembership.Role.ADMIN).exists()
+
         context["already_requested"] = GroupRequest.objects.filter(group=self.object, requested_by=self.request.user).exists()
         context["is_admin"] = is_admin
         context["join_requests"] = GroupRequest.objects.filter(group=self.object).select_related("requested_by") if is_admin else []
         context["recent_posts"] = posts[:10]
         context["recent_games"] = [p.game for p in context["recent_posts"]]
         context["total_posts"] = posts.count()
-        context["players"] = players
+        context["memberships"] = memberships  # <<< usar no template
+        context["players"] = [gm.user for gm in memberships]  # se algo ainda usar
         context["is_member"] = is_member
         return context
+
+@login_required
+@group_admin_required
+def group_promote_member_view(request, slug, user_id):
+    if request.method != "POST":
+        messages.error(request, "Operação inválida.")
+        return redirect("core:group_detail", slug=slug)
+
+    group = get_object_or_404(Group, slug=slug)
+    target_user = get_object_or_404(User, pk=user_id)
+
+    if target_user == group.created_by:
+        messages.info(request, "O criador já possui privilégios máximos.")
+        return redirect("core:group_detail", slug=slug)
+
+    gm = GroupMembership.objects.filter(group=group, user=target_user).first()
+    if not gm:
+        messages.error(request, "Usuário não é membro deste grupo.")
+        return redirect("core:group_detail", slug=slug)
+
+    if gm.role == GroupMembership.Role.ADMIN:
+        messages.info(request, f"{target_user.username} já é administrador.")
+    else:
+        gm.role = GroupMembership.Role.ADMIN
+        gm.save(update_fields=["role"])
+        messages.success(request, f"{target_user.username} agora é administrador.")
+
+    return redirect("core:group_detail", slug=slug)
+
+
+@login_required
+@group_admin_required
+def group_demote_admin_view(request, slug, user_id):
+    if request.method != "POST":
+        messages.error(request, "Operação inválida.")
+        return redirect("core:group_detail", slug=slug)
+
+    group = get_object_or_404(Group, slug=slug)
+    target_user = get_object_or_404(User, pk=user_id)
+
+    if target_user == group.created_by:
+        messages.error(request, "Você não pode remover privilégios do criador do grupo.")
+        return redirect("core:group_detail", slug=slug)
+
+    gm = GroupMembership.objects.filter(group=group, user=target_user).first()
+    if not gm:
+        messages.error(request, "Usuário não é membro deste grupo.")
+        return redirect("core:group_detail", slug=slug)
+
+    if gm.role != GroupMembership.Role.ADMIN:
+        messages.info(request, f"{target_user.username} já não é administrador.")
+    else:
+        gm.role = GroupMembership.Role.MEMBER
+        gm.save(update_fields=["role"])
+        messages.success(request, f"Privilégios de administrador removidos de {target_user.username}.")
+
+    return redirect("core:group_detail", slug=slug)
+
+
+@login_required
+@group_admin_required
+def group_remove_member_view(request, slug, user_id):
+    if request.method != "POST":
+        messages.error(request, "Operação inválida.")
+        return redirect("core:group_detail", slug=slug)
+
+    group = get_object_or_404(Group, slug=slug)
+    target_user = get_object_or_404(User, pk=user_id)
+
+    if target_user == group.created_by:
+        messages.error(request, "Você não pode remover o criador do grupo.")
+        return redirect("core:group_detail", slug=slug)
+    if target_user == request.user:
+        messages.info(request, "Para sair do grupo, use o botão 'Sair do grupo'.")
+        return redirect("core:group_detail", slug=slug)
+
+    deleted, _ = GroupMembership.objects.filter(group=group, user=target_user).delete()
+    if deleted:
+        messages.success(request, f"{target_user.username} foi removido do grupo.")
+    else:
+        messages.info(request, "Este usuário não era membro do grupo.")
+
+    return redirect("core:group_detail", slug=slug)
+
 
 
 @login_required
@@ -94,13 +199,10 @@ def group_create_view(request):
                         created_by=request.user,
                     )
             except IntegrityError:
-                # Conflito de unicidade do banco (corrida, etc.)
                 form.add_error("name", "Já existe um grupo com este nome.")
-                # NÃO usar messages.error aqui; o erro já aparece no campo.
             else:
                 messages.success(request, "Grupo criado!")
                 return redirect(reverse("core:group_list"))
-        # Se form inválido: apenas cair para o render com os errors nos campos.
     else:
         form = GroupForm()
 
@@ -117,14 +219,12 @@ def group_join_request_view(request, slug):
             Group.objects
             .select_related("created_by")
             .annotate(member_count=models.Count("memberships__user", distinct=True))
-            .get(slug=slug)  # <- agora é uma instância, não um QuerySet
+            .get(slug=slug)
         )
     except Group.DoesNotExist:
         messages.error(request, "Grupo não encontrado.")
-        return redirect("core:group_list")  # ajuste para sua rota de listagem
-    # except Group.MultipleObjectsReturned:  # só se slug não for único
-    #     messages.error(request, "Slug de grupo não é único.")
-    #     return redirect("core:group_list")
+        return redirect("core:group_list")
+
 
     membership = GroupMembership.objects.filter(group=group, user=request.user).exists()
     if membership:
@@ -132,8 +232,7 @@ def group_join_request_view(request, slug):
         return redirect("core:group_detail", slug=slug)
 
     invite = GroupRequest.objects.filter(group=group, requested_by=request.user).first()
-    print("INVITES: ", GroupRequest.objects.filter())
-    print("INVITE: ", invite)
+
     return render(
         request,
         "group_request.html",
@@ -175,7 +274,6 @@ def group_accept_request_view(request, slug, request_id):
     group = get_object_or_404(Group, slug=slug)
     join_request = get_object_or_404(GroupRequest, id=request_id, group=group)
 
-    # Adiciona o usuário ao grupo
     GroupMembership.objects.get_or_create(user=join_request.requested_by, group=group, defaults={"role": GroupMembership.Role.MEMBER})
     GroupRequest.objects.filter(id=request_id).delete()
     messages.success(request, f"Pedido de {join_request.requested_by.username} aceito. Ele agora é membro de “{group.name}”.")
@@ -239,7 +337,6 @@ def game_create_view(request):
             game.created_by = request.user
             game.save()
 
-            # Post em grupos selecionados (ids em request.POST.getlist("groups"))
             for gid in group_ids:
                 group = Group.objects.filter(pk=gid).first()
                 if group:
@@ -277,14 +374,15 @@ def game_detail_view(request, pk: int):
             request.session.pop(session_key, None)
 
     participations = game.participations.select_related("player").all()
-
+    total_pot = sum((p.final_balance + (p.rebuy or 0) for p in participations))
     return render(
         request,
         "game_detail.html",
         {
             "game": game,
             "participations": participations,
-            "back_group": back_group,  # <- para o botão de voltar
+            "back_group": back_group,
+            "total_pot": total_pot,
         },
     )
 
@@ -299,7 +397,6 @@ def participation_add_view(request, pk: int):
                 form.save()
                 return redirect("core:game_detail", pk=game.pk)
             except IntegrityError:
-                # Corrida/conflito de unicidade: devolve erro amigável
                 form.add_error("player", "Este jogador já foi adicionado a esta partida.")
     else:
         form = GameParticipationForm(game=game)
@@ -313,7 +410,6 @@ class RememberMeLoginView(LoginView):
     redirect_authenticated_user = True  # já logado vai pro destino
 
     def form_valid(self, form):
-        # controla expiração da sessão pelo checkbox remember_me
         remember = form.cleaned_data.get("remember_me")
         self.request.session.set_expiry(60*60*24*14 if remember else 0)
         return super().form_valid(form)
@@ -326,7 +422,6 @@ def signup_view(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # loga automaticamente após cadastro
             login(request, user)
             return redirect("core:group_list")
     else:
