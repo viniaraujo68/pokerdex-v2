@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitar entrada — {{ group.name }}{% endblock %}
+
+{% block content %}
+
+<div class="min-vh-75 d-flex align-items-start justify-content-center text-center pt-4">
+  <div class="text-light" style="max-width: 720px; width: 100%;">
+    
+    <div class="gradient-bar mb-3"></div>
+
+    <h1 class="h3 fw-semibold text-warning mb-2">
+      {{ group.name }}
+    </h1>
+
+    <p class="small mb-1">
+      Criado por <span class="text-reset fw-medium">{{ group.created_by }}</span>
+      <span class="meta-dot"></span>
+      {{ group.created_at|date:"d/m/Y" }} às {{ group.created_at|time:"H:i" }}
+      <span class="meta-dot"></span>
+      {{ group.member_count }} membro{{ group.member_count|pluralize:"(s)" }}
+    </p>
+
+    <div class="soft-divider"></div>
+
+    {% if already_member %}
+      <div class="alert frost-alert text-light mb-3">
+        ✅ Você já é membro deste grupo.
+      </div>
+      <form method="get" action="{% url 'core:group_detail' slug=group.slug %}">
+        <button type="submit" class="btn btn-sm btn-warning glow-btn">Ir para o grupo</button>
+      </form>
+
+    {% elif already_requested %}
+      <div class="alert frost-alert text-light mb-3">
+        ⏳ Sua solicitação de entrada foi enviada aos administradores. Aguarde a aprovação.
+      </div>
+      <form method="get" action="{% url 'core:group_list' %}">
+        <button type="submit" class="btn btn-sm btn-outline-light">Voltar</button>
+      </form>
+
+    {% else %}
+    <div class="alert frost-alert text-light mb-3">
+        🔒 Para participar deste grupo, envie uma solicitação aos administradores.
+        <form method="post" action="{% url 'core:group_create_join_request' slug=group.slug %}" class="mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-lg btn-warning glow-btn">Solicitar entrada</button>
+        </form>
+    </div>
+    <a href="{% url 'core:group_list' %}" class="link-light link-underline-opacity-0 link-underline-opacity-75-hover small">
+        ← Voltar à lista de grupos
+    </a>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
