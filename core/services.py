@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.utils.crypto import get_random_string
 from django.contrib.auth import get_user_model
-from .models import Group, GroupMembership, Game, GamePost, GameParticipation
+from .models import Group, GroupMembership
 User = get_user_model()
 
 

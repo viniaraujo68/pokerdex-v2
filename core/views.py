@@ -46,8 +46,6 @@ def group_list_view(request):
         .order_by("name")
     )
     group_b = groups.filter(name="b").first()
-    print("TODOS OS GRUPOS:", list(Group.objects.all())[6].slug)
-    print("Grupo com nome 'b':", group_b)
     return render(request, "group_list.html", {"groups": groups})
 
 class GroupDetailView(DetailView):
