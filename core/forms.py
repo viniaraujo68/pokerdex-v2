@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from .models import Game, GameParticipation, Group, GroupMembership
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db.models.functions import Lower
 User = get_user_model()
 
@@ -102,12 +103,16 @@ class LoginForm(AuthenticationForm):
     remember_me = forms.BooleanField(
         label="Manter conectado", required=False
     )
+    error_messages = {
+        "invalid_login": "Usuário ou senha inválidos.",
+    }
 
 class SignUpForm(UserCreationForm):
     username = forms.CharField(
         label="Usuário",
-        max_length=150,
+        max_length=25,
         help_text="Obrigatório. Até 150 caracteres. Letras, dígitos e @/./+/-/_ apenas.",
+        validators=[UnicodeUsernameValidator(message="Informe um nome de usuário válido. Use apenas letras, números e @/./+/-/_")],
         widget=forms.TextInput(attrs={"placeholder": "Seu usuário"})
     )
     
