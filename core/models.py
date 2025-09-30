@@ -159,7 +159,10 @@ class GameParticipation(models.Model):
     """
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="participations")
     player = models.ForeignKey(User, verbose_name="Jogador", on_delete=models.PROTECT, related_name="game_participations")
-    final_balance = models.DecimalField(max_digits=10, verbose_name="Stack final", decimal_places=2)
+    rebuy = models.DecimalField(
+        max_digits=10, verbose_name="Rebuy", decimal_places=2, default=0, validators=[MinValueValidator(0)], null=True
+    )
+    final_balance = models.DecimalField(max_digits=10, verbose_name="Stack final", decimal_places=2, validators=[MinValueValidator(0)])
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

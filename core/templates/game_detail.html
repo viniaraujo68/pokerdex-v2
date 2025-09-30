@@ -9,7 +9,6 @@
   <a href="{% url 'core:group_detail' slug=back_group.slug %}"
      class="back-link d-inline-flex align-items-center text-decoration-none">
     <span class="chev" aria-hidden="true">
-      <!-- Chevron SVG 100% inline, sem dependências -->
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16">
         <path fill="currentColor" fill-rule="evenodd"
               d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
@@ -31,10 +30,11 @@
           <span class="chip chip-neutral" title="Local">📍 {{ game.location }}</span>
         {% endif %}
         <span class="chip chip-gold" title="Buy-in">💰 R$ {{ game.buy_in }}</span>
+        <span class="chip chip-green" title="Total da noite">💵 R$ {{ total_pot }}</span>
+
       </div>
     </div>
 
-    <!-- Botão só aparece se já houver participações -->
     {% if participations %}
       <div class="ms-md-auto d-flex gap-2">
         <a href="{% url 'core:participation_add' game.pk %}" class="btn btn-sm btn-outline-warning">
@@ -46,7 +46,6 @@
 </div>
 
 {% if not participations %}
-  <!-- Bloco centralizado quando não há participações -->
   <div class="text-center my-4">
     <p class="mb-3">Nenhuma participação ainda.</p>
     <a href="{% url 'core:participation_add' game.pk %}" class="btn btn-warning">
@@ -55,7 +54,6 @@
   </div>
 {% endif %}
 
-<!-- Card da lista de participações (mostra vazio amigável quando não houver) -->
 {% if participations %}
 <div class="card bg-dark border-secondary text-light card-hover">
   <div class="card-body">
@@ -64,20 +62,37 @@
       <span class="badge bg-secondary">{{ participations|length }}</span>
     </div>
 
-      <ul class="list-group list-group-flush">
-        {% for p in participations %}
-          <li class="list-group-item text-light d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2">
-              <span class="player-pill">{{ p.player }}</span>
+<ul class="list-group list-group-flush">
+  {% for p in participations %}
+    {% with invested=game.buy_in|add:p.rebuy %}
+      <li class="list-group-item text-light d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <span class="player-pill">{{ p.player }}</span>
+        </div>
+
+        <div class="text-end">
+          <div class="d-flex align-items-center gap-2 justify-content-end">
+            <div class="amount
+                {% if p.final_balance > invested %}
+                  amount-win
+                {% elif p.final_balance < invested %}
+                  amount-loss
+                {% else %}
+                  amount-even
+                {% endif %}">
+              R$ {{ p.final_balance }}
             </div>
-            <div class="text-end">
-              <div class="amount {% if p.final_balance > game.buy_in %}amount-win{% elif p.final_balance < game.buy_in %}amount-loss{% else %}amount-even{% endif %}">
-                R$ {{ p.final_balance }}
-              </div>
-            </div>
-          </li>
-        {% endfor %}
-      </ul>
+
+            <span class="chip chip-neutral" title="Rebuy">
+              ↻ R$ {{ p.rebuy|default:0 }}
+            </span>
+          </div>
+        </div>
+      </li>
+    {% endwith %}
+  {% endfor %}
+</ul>
+
     </div>
   </div>
 {% endif %}
