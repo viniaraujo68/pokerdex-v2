@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -10,6 +11,13 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "https://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://127.0.0.1:8000",
+]
 
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 
