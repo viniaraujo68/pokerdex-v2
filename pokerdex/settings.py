@@ -21,6 +21,14 @@ CSRF_TRUSTED_ORIGINS = [
 
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "teampokerdex@gmail.com"
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = "Pokerdex <teampokerdex@gmail.com>"
+
 INSTALLED_APPS = [
     "core",
     'django.contrib.admin',
@@ -33,7 +41,7 @@ INSTALLED_APPS = [
 
 LOGIN_REDIRECT_URL = "core:group_list"
 LOGIN_URL = '/account/login'
-LOGOUT_REDIRECT_URL = "core:group_list"
+LOGOUT_REDIRECT_URL = LOGIN_URL
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

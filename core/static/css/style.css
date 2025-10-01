@@ -285,3 +285,31 @@ form .form-control:focus{
     margin-bottom: 25px;
     color: var(--gold);
   }
+
+.has-errors input:not([type="checkbox"]),
+.has-errors select,
+.has-errors textarea {
+  border-color: var(--danger-2) !important;
+  box-shadow: 0 0 0 .15rem rgba(231, 76, 60, .25) !important;
+  background: var(--panel) !important;
+}
+
+.back-icon{
+  color: var(--gold);
+  border-color: var(--gold);
+  background: transparent;
+  font-weight: 600;
+  box-shadow: 0 0 0 .15rem rgba(212,175,55,.12);
+  transition: transform .08s ease, box-shadow .18s ease, color .18s ease, border-color .18s ease, background .18s ease;
+}
+.back-icon:hover{
+  color: #111;
+  background: var(--gold);
+  border-color: var(--gold);
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 .25rem var(--gold-soft);
+}
+.back-icon i{
+  font-size: 1rem;
+  line-height: 1;
+}
