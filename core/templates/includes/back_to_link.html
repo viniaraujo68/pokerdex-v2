@@ -1,0 +1,9 @@
+{% with label_text=label|default:"Voltar" icon_class=icon|default:"bi-arrow-left-circle" %}
+<a href="{{ href }}"
+   class="back-icon btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1 {{ classes }}"
+   aria-label="{{ label_text }}"
+   title="{{ label_text }}">
+  <i class="bi {{ icon_class }}"></i>
+  <span class="d-none d-sm-inline">{{ label_text }}</span>
+</a>
+{% endwith %}

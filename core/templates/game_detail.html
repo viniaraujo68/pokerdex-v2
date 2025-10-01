@@ -3,20 +3,9 @@
 {% block title %}{{ game }} | Pokerdex{% endblock %}
 
 {% block content %}
-
-{% if back_group %}
-<div class="position-sticky back-btn">
-  <a href="{% url 'core:group_detail' slug=back_group.slug %}"
-     class="back-link d-inline-flex align-items-center text-decoration-none">
-    <span class="chev" aria-hidden="true">
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16">
-        <path fill="currentColor" fill-rule="evenodd"
-              d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
-      </svg>
-    </span>
-    <span class="label">{{ back_group.name }}</span>
-  </a>
-</div>
+{% if from_group %}
+{% url 'core:group_detail' slug=from_group.slug as group_url %}
+{% include "includes/back_to_link.html" with href=group_url label="Voltar ao grupo" icon="bi-arrow-left-circle" %}
 {% endif %}
 
 <div class="card bg-dark border-secondary text-light mb-3">
@@ -34,7 +23,13 @@
 
       </div>
     </div>
-
+    {% if can_edit_game %}
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'core:game_edit' pk=game.pk %}">Editar partida</a>
+      <form class="d-inline" method="post" action="{% url 'core:game_delete' pk=game.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-sm btn-outline-danger" type="submit">Excluir</button>
+      </form>
+    {% endif %}
     {% if participations %}
       <div class="ms-md-auto d-flex gap-2">
         <a href="{% url 'core:participation_add' game.pk %}" class="btn btn-sm btn-outline-warning">
@@ -72,6 +67,13 @@
 
         <div class="text-end">
           <div class="d-flex align-items-center gap-2 justify-content-end">
+            {% if can_edit_game or request.user.id == p.player_id %}
+              <a class="btn btn-xs btn-outline-primary" href="{% url 'core:participation_edit' pk=game.pk part_id=p.pk %}">Editar</a>
+              <form class="d-inline" method="post" action="{% url 'core:participation_delete' pk=game.pk part_id=p.pk %}">
+                {% csrf_token %}
+                <button class="btn btn-xs btn-outline-danger" type="submit">Excluir</button>
+              </form>
+            {% endif %}
             <div class="amount
                 {% if p.final_balance > invested %}
                   amount-win
