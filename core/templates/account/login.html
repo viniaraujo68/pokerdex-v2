@@ -39,6 +39,9 @@
           <label for="{{ form.remember_me.id_for_label }}" class="form-check-label ms-1">
             {{ form.remember_me.label }}
           </label>
+          <p class="mt-2">
+            <a class="link-warning" href="{% url 'core:password_reset' %}">Esqueci minha senha</a>
+          </p>
         </div>
 
         {% if next %}
