@@ -3,6 +3,9 @@
 {% block title %}{{ group.name }} | Pokerdex{% endblock %}
 
 {% block content %}
+{% url 'core:group_list' as groups_url %}
+{% include "includes/back_to_link.html" with href=groups_url label="Voltar aos grupos" icon="bi-arrow-left-circle" %}
+
 <div class="group-hero card bg-dark border-secondary text-light mb-3">
   <div class="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
     <div class="flex-grow-1">
@@ -19,6 +22,7 @@
     <div class="ms-md-auto d-flex flex-wrap gap-2">
       {% if request.user.is_authenticated and is_member %}
         {% if is_admin %}
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'core:group_edit' slug=group.slug %}">Editar grupo</a>
           <form action="{% url 'core:group_delete' group.slug %}" method="post" class="m-0">
             {% csrf_token %}
             <button type="submit" class="btn btn-sm btn-outline-danger"
@@ -109,7 +113,7 @@
           {% if recent_posts %}
             <ul class="list-group list-group-flush">
               {% for post in recent_posts %}
-                <a href="{% url 'core:game_detail' post.game.pk %}"
+                <a href="{% url 'core:game_detail' post.game.pk %}?from_group={{ group.slug }}"
                    class="list-group-item list-group-item-action card-hover text-light text-decoration-none">
                   <div class="fw-semibold text-warning">
                     {{ post.game.title|default:"Partida" }}
