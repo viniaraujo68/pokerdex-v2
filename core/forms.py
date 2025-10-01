@@ -1,14 +1,12 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Game, GameParticipation, Group, GroupMembership
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.db.models import Count, Q
 from django.db.models.functions import Lower
+from .models import Game, GameParticipation, Group, GroupMembership
 User = get_user_model()
-
-from django import forms
-from .models import Group
 
 class GroupForm(forms.ModelForm):
     class Meta:
@@ -60,9 +58,8 @@ class GameForm(forms.ModelForm):
         return groups
 
 
-from django import forms
-from django.db.models import Q
-from .models import GameParticipation
+
+User = get_user_model()
 
 class GameParticipationForm(forms.ModelForm):
     class Meta:
@@ -75,20 +72,66 @@ class GameParticipationForm(forms.ModelForm):
         if self.game:
             self.instance.game = self.game
 
+            group_ids = list(self.game.groups.values_list("id", flat=True))
+
+            if group_ids:
+                # usuários que são membros de TODOS os grupos (interseção)
+                eligible_players = (
+                    User.objects
+                    .filter(group_memberships__group_id__in=group_ids)  # <-- corrigido
+                    .annotate(
+                        gcount=Count(
+                            "group_memberships__group_id",               # <-- corrigido
+                            filter=Q(group_memberships__group_id__in=group_ids),
+                            distinct=True,
+                        )
+                    )
+                    .filter(gcount=len(group_ids))
+                )
+            else:
+                eligible_players = User.objects.none()
+
+            already_in_game = GameParticipation.objects.filter(
+                game=self.game
+            ).values_list("player_id", flat=True)
+            eligible_players = eligible_players.exclude(pk__in=already_in_game)
+
+            if self.instance.pk and getattr(self.instance, "player_id", None):
+                eligible_players = User.objects.filter(pk=self.instance.player_id) | eligible_players
+
+            self.fields["player"].queryset = eligible_players.order_by("username")
+
     def clean_player(self):
         player = self.cleaned_data.get("player")
         game = getattr(self.instance, "game", None)
-
         if not player or not game:
             return player
 
+        # evita duplicata
         qs = GameParticipation.objects.filter(game=game, player=player)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
-
         if qs.exists():
             raise forms.ValidationError("Este jogador já foi adicionado a esta partida.")
+
+        # defesa extra: garantir que pertence a TODOS os grupos do jogo
+        group_ids = list(game.groups.values_list("id", flat=True))
+        if group_ids:
+            count_in_groups = (
+                GroupMembership.objects
+                .filter(user=player, group_id__in=group_ids)
+                .values("user_id")
+                .annotate(gcount=Count("group_id", distinct=True))
+                .values_list("gcount", flat=True)
+                .first()
+            ) or 0
+            if count_in_groups < len(group_ids):
+                raise forms.ValidationError(
+                    "Este jogador não pertence a todos os grupos nos quais a partida foi postada."
+                )
+
         return player
+
 
 
 class LoginForm(AuthenticationForm):
