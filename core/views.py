@@ -43,8 +43,16 @@ def group_creator_required(view_func):
 def group_list_view(request):
     q = request.GET.get("q", "")
 
-    my_groups = Group.objects.filter(memberships__user=request.user)
-    other_groups = Group.objects.exclude(memberships__user=request.user)
+    my_groups = Group.objects.filter(memberships__user=request.user).select_related("created_by").annotate(
+        member_count=models.Count("memberships", distinct=True),
+        post_count=models.Count("posts", distinct=True),
+        last_post=models.Max("posts__posted_at"),
+    )
+    other_groups = Group.objects.exclude(memberships__user=request.user).select_related("created_by").annotate(
+        member_count=models.Count("memberships", distinct=True),
+        post_count=models.Count("posts", distinct=True),
+        last_post=models.Max("posts__posted_at"),
+    )
 
     if q:
         my_groups = my_groups.filter(Q(name__icontains=q) | Q(description__icontains=q))
