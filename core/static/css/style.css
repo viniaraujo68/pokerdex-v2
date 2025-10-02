@@ -313,3 +313,134 @@ form .form-control:focus{
   font-size: 1rem;
   line-height: 1;
 }
+
+.btn-create-group {
+  background: linear-gradient(135deg, var(--gold) 0%, #f5e6a8 100%);
+  color: #111;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 0 0 .15rem rgba(212,175,55,.2);
+  transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+}
+.btn-create-group:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #ffe066, var(--gold));
+  box-shadow: 0 0 0 .25rem rgba(212,175,55,.35);
+  text-decoration: none;
+  color: #111;
+}
+
+/* Nova Partida - vermelho pôquer */
+.btn-create-game {
+  background: linear-gradient(135deg, var(--danger) 0%, #e74c3c 100%);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 0 0 .15rem rgba(192,57,43,.25);
+  transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+}
+.btn-create-game:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #ff6b6b, #c0392b);
+  box-shadow: 0 0 0 .25rem rgba(231,76,60,.35);
+  text-decoration: none;
+  color: #fff;
+}
+
+.btn-create-group i,
+.btn-create-game i {
+  font-size: 1.1rem;
+}
+
+.btn-groups {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1c1c1c 100%);
+  color: var(--muted-2);
+  font-weight: 600;
+  border: 1px solid var(--gold-soft);
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform .12s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
+}
+
+.btn-groups:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #333 0%, #1e1e1e 100%);
+  color: #fff;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 .15rem var(--gold-soft);
+  text-decoration: none;
+}
+
+.btn-groups i {
+  font-size: 1.05rem;
+}
+
+/* Botão admin - promover (verde) */
+.btn-promote {
+  background: linear-gradient(135deg, #257fa2 0%, #0e5988 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .12s ease, box-shadow .2s ease;
+}
+.btn-promote:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 .25rem rgba(27, 124, 185, 0.35);
+}
+
+/* Botão admin - rebaixar (amarelo) */
+.btn-demote {
+  background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%);
+  color: #111;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .12s ease, box-shadow .2s ease;
+}
+.btn-demote:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 .25rem rgba(241,196,15,.35);
+}
+
+/* Botão admin - remover (vermelho) */
+.btn-remove {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .12s ease, box-shadow .2s ease;
+}
+.btn-remove:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 .25rem rgba(231,76,60,.35);
+}
+
+.btn-promote i,
+.btn-demote i,
+.btn-remove i {
+  font-size: 1rem;
+}

@@ -75,23 +75,31 @@
                         {% if gm.role == gm.Role.ADMIN %}
                           <form action="{% url 'core:group_demote_admin' slug=group.slug user_id=gm.user.id %}" method="post" class="m-0">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-warning">Rebaixar</button>
+                            <button type="submit" class="btn btn-sm btn-demote" title="Rebaixar administrador">
+                              <i class="bi bi-person-fill-down"></i>
+                            </button>
                           </form>
                         {% else %}
                           <form action="{% url 'core:group_promote_member' slug=group.slug user_id=gm.user.id %}" method="post" class="m-0">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-success">Promover</button>
+                            <button type="submit" class="btn btn-sm btn-promote" title="Promover a administrador">
+                              <i class="bi bi-person-fill-up"></i>
+                            </button>
                           </form>
                         {% endif %}
 
                         <form action="{% url 'core:group_remove_member' slug=group.slug user_id=gm.user.id %}" method="post" class="m-0"
                               onsubmit="return confirm('Remover {{ gm.user.username }} do grupo?');">
                           {% csrf_token %}
-                          <button type="submit" class="btn btn-sm btn-outline-danger">Remover</button>
+                          <button type="submit" class="btn btn-sm btn-remove" title="Remover do grupo">
+                            <i class="bi bi-trash-fill"></i>
+                          </button>
                         </form>
                       {% endif %}
                     </div>
                   {% endif %}
+
+
                 </li>
               {% endfor %}
             </ul>
