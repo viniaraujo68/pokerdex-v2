@@ -3,9 +3,12 @@
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-3">
-  <h1 class="h3 m-0">Grupos</h1>
+  <div class="d-flex align-items-center gap-2">
+    <h1 class="h3 m-0 text-warning">Grupos</h1>
+  </div>
+
   {% if my_groups %}
-  <div>
+  <div class="d-flex align-items-center gap-2">
     <a href="{% url 'core:game_create' %}" class="btn btn-create-game">
       <i class="bi bi-cash-stack"></i>
       Nova noite
@@ -18,12 +21,14 @@
   {% endif %}
 </div>
 
-<section class="mb-4">
+<section class="my-groups-section">
   <div class="d-flex align-items-center justify-content-between mb-2">
-    <h2 class="h5 m-0">Meus Grupos</h2>
-    {% if my_groups %}
-      <span class="badge bg-secondary">{{ my_groups|length }}</span>
-    {% endif %}
+    <div class="d-flex align-items-center gap-2">
+      <h2 class="h5 m-0">Meus Grupos</h2>
+      {% if my_groups %}
+        <span class="badge bg-secondary">{{ my_groups|length }}</span>
+      {% endif %}
+    </div>
   </div>
 
   <div class="gradient-bar mb-3"></div>
@@ -35,22 +40,21 @@
           <a href="{% url 'core:group_detail' g.slug %}"
              class="card card-hover bg-dark border-secondary text-light h-100 card-link position-relative">
 
-            {# ações do dono/admin — pode deletar #}
-            <form action="{% url 'core:group_delete' g.slug %}" method="post"
-                  class="delete-form">
+            <form action="{% url 'core:group_delete' g.slug %}" method="post" class="delete-form">
               {% csrf_token %}
               <button type="submit"
-                      class="btn btn-sm btn-outline-danger"
-                      onclick="return confirm('Tem certeza que deseja deletar este grupo? Essa ação é irreversível.');">
-                🗑
+                      class="btn btn-sm btn-icon-ghost btn-reject"
+                      onclick="return confirm('Tem certeza que deseja deletar este grupo? Essa ação é irreversível.');"
+                      title="Excluir grupo" aria-label="Excluir grupo">
+                <i class="bi bi-trash-fill"></i>
               </button>
             </form>
 
             <div class="card-body d-flex flex-column">
               <h5 class="card-title mb-1 text-warning">{{ g.name }}</h5>
 
-              <p class="card-subtitle mb-2 small">
-                criado por {{ g.created_by }} · {{ g.member_count }} membro{% if g.member_count != 1 %}s{% endif %}
+              <p class="card-subtitle mb-2 small text-gray">
+                criado por {{ g.created_by }} <span class="meta-dot"></span> {{ g.member_count }} membro{% if g.member_count != 1 %}s{% endif %}
               </p>
 
               {% if g.description %}
@@ -59,8 +63,8 @@
                 </p>
               {% endif %}
 
-              <span class="badge bg-secondary align-self-start">
-                {{ g.post_count }} jogo{% if g.post_count != 1 %}s{% endif %}
+              <span class="chip chip-neutral align-self-start">
+                <i class="bi bi-suit-spa"></i> {{ g.post_count }} jogo{% if g.post_count != 1 %}s{% endif %}
               </span>
             </div>
 
@@ -75,22 +79,25 @@
         </div>
       {% endfor %}
     </div>
-{% else %}
-  <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; margin-top: 60px;">
-    <h1>Ops!</h1>
-    <span>Parece que você não está em nenhum grupo ainda.</span>
-    <a href="{% url 'core:group_create' %}" class="btn btn-create-group">
-    <i class="bi bi-dice-5-fill"></i>
-      Criar novo grupo
-    </a>
-  </div>
-{% endif %}
+  {% else %}
+    <div class="border-secondary text-light text-center py-5">
+      <div class="card-body">
+        <h3 class="h5 mb-2">Ops! Você ainda não está em nenhum grupo.</h3>
+        <p class="text-gray mb-3">Crie um grupo ou peça para entrar em um existente.</p>
+        <a href="{% url 'core:group_create' %}" class="btn btn-create-group">
+          <i class="bi bi-people-fill"></i> Criar novo grupo
+        </a>
+      </div>
+    </div>
+  {% endif %}
 </section>
 
 <section class="mb-2">
   <div class="d-flex align-items-center justify-content-between mb-2">
-    <h2 class="h5 m-0">Outros Grupos</h2>
-    <span class="badge bg-secondary">{{ other_groups|length }}</span>
+    <div class="d-flex align-items-center gap-2">
+      <h2 class="h5 m-0">Outros Grupos</h2>
+      <span class="badge bg-secondary">{{ other_groups|length }}</span>
+    </div>
   </div>
   <div class="gradient-bar mb-3"></div>
 
@@ -104,8 +111,8 @@
             <div class="card-body d-flex flex-column">
               <h5 class="card-title mb-1 text-warning">{{ g.name }}</h5>
 
-              <p class="card-subtitle mb-2 small">
-                criado por {{ g.created_by }} · {{ g.member_count }} membro{% if g.member_count != 1 %}s{% endif %}
+              <p class="card-subtitle mb-2 small text-gray">
+                criado por {{ g.created_by }} <span class="meta-dot"></span> {{ g.member_count }} membro{% if g.member_count != 1 %}s{% endif %}
               </p>
 
               {% if g.description %}
@@ -114,8 +121,8 @@
                 </p>
               {% endif %}
 
-              <span class="badge bg-secondary align-self-start">
-                {{ g.post_count }} jogo{% if g.post_count != 1 %}s{% endif %}
+              <span class="chip chip-neutral align-self-start">
+                <i class="bi bi-suit-spa"></i> {{ g.post_count }} jogo{% if g.post_count != 1 %}s{% endif %}
               </span>
             </div>
 
@@ -132,17 +139,8 @@
     </div>
   {% else %}
     <div class="text-center py-4">
-      <span>Nenhum outro grupo encontrado.</span>
+      <span class="text-gray">Nenhum outro grupo encontrado.</span>
     </div>
   {% endif %}
 </section>
-
-{# CTA de Nova partida se o usuário tem algum grupo #}
-{% if my_groups %}
-  <div class="mt-3">
-    <a href="{% url 'core:game_create' %}" class="btn btn-outline-warning">
-      + Nova partida
-    </a>
-  </div>
-{% endif %}
 {% endblock %}

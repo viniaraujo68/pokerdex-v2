@@ -19,7 +19,6 @@
       Preencha os campos abaixo. Itens marcados podem ter validações específicas.
     </p>
 
-    {# Erros do formulário (não-campo) #}
     {% if form.non_field_errors %}
       <div class="alert alert-danger frost-alert py-2 px-3 mb-3">
         {% for e in form.non_field_errors %}
@@ -32,7 +31,6 @@
       {% csrf_token %}
 
       {% for field in form %}
-        {# Campo do tipo "grupos" vira um conjunto de toggles (como em Nova Partida) #}
         {% if field.name == "groups" %}
           <div class="mb-2 {% if field.errors %}has-errors{% endif %}">
             <label class="form-label">{{ field.label }}</label>
@@ -50,7 +48,6 @@
             {% endfor %}
           </div>
 
-        {# Checkboxes simples no estilo do site #}
         {% elif field.field.widget.input_type == "checkbox" %}
           <div class="form-check {% if field.errors %}has-errors{% endif %}">
             {{ field }}
@@ -63,7 +60,6 @@
             {% endfor %}
           </div>
 
-        {# Demais campos (text, number, select, textarea, file, etc.) #}
         {% else %}
           <div class="mb-2 {% if field.errors %}has-errors{% endif %}">
             <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>

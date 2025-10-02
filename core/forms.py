@@ -15,7 +15,7 @@ class GroupForm(forms.ModelForm):
         labels = {"name": "Nome", "description": "Descrição"}
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control", "autocomplete": "off"}),
-            "description": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "description": forms.Textarea(attrs={"class": "text-light form-control", "rows": 4}),
         }
 
     def clean_name(self):
