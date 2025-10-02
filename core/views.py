@@ -30,6 +30,14 @@ def group_admin_required(view_func):
         return view_func(request, slug, *args, **kwargs)
     return _wrapped_view
 
+def group_creator_required(view_func):
+    def _wrapped_view(request, slug, *args, **kwargs):
+        group = get_object_or_404(Group, slug=slug)
+        if group.created_by_id != request.user.id:
+            return HttpResponseForbidden("Você não é o criador deste grupo.")
+        return view_func(request, slug, *args, **kwargs)
+    return _wrapped_view
+
 
 @login_required
 def group_list_view(request):
