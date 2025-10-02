@@ -120,18 +120,15 @@ class GameParticipationForm(forms.ModelForm):
             count_in_groups = (
                 GroupMembership.objects
                 .filter(user=player, group_id__in=group_ids)
-                .values("user_id")
-                .annotate(gcount=Count("group_id", distinct=True))
-                .values_list("gcount", flat=True)
-                .first()
-            ) or 0
+                .aggregate(gcount=Count("group_id", distinct=True))
+                ["gcount"] or 0
+            )
             if count_in_groups < len(group_ids):
                 raise forms.ValidationError(
                     "Este jogador não pertence a todos os grupos nos quais a partida foi postada."
                 )
 
         return player
-
 
 
 class LoginForm(AuthenticationForm):
