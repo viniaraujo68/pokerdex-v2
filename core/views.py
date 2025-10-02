@@ -48,56 +48,60 @@ def group_list_view(request):
         {"my_groups": my_groups, "other_groups": other_groups},
     )
 
-class GroupDetailView(DetailView):
-    model = Group
-    template_name = "group_detail.html"
-    context_object_name = "group"
-    slug_field = "slug"
-    slug_url_kwarg = "slug"
-
-    def get_queryset(self):
-        posts_qs = (GamePost.objects
+@login_required
+def group_detail_view(request, slug):
+    group = (
+        Group.objects
+        .prefetch_related(
+            models.Prefetch(
+                "posts",
+                queryset=GamePost.objects
                     .select_related("game", "posted_by", "group")
-                    .order_by("-posted_at"))
-        return (Group.objects
-                .prefetch_related(models.Prefetch("posts", queryset=posts_qs))
-                )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        posts = self.object.posts.all()
-
-
-        memberships = (
-            GroupMembership.objects
-            .filter(group=self.object)
-            .select_related("user")
-            .annotate(
-                role_order=Case(
-                    When(user=self.object.created_by, then=Value(0)),  # criador
-                    When(role=GroupMembership.Role.ADMIN, then=Value(1)),
-                    When(role=GroupMembership.Role.MEMBER, then=Value(2)),
-                    default=Value(3),
-                    output_field=IntegerField(),
-                )
+                    .order_by("-posted_at")
             )
-            .order_by("role_order", "user__username")
         )
+        .select_related("created_by")
+        .get(slug=slug)
+    )
 
+    posts = group.posts.all()
 
-        is_member = GroupMembership.objects.filter(user=self.request.user, group=self.object).exists()
-        is_admin = GroupMembership.objects.filter(user=self.request.user, group=self.object, role=GroupMembership.Role.ADMIN).exists()
+    memberships = (
+        GroupMembership.objects
+        .filter(group=group)
+        .select_related("user")
+        .annotate(
+            role_order=Case(
+                When(user=group.created_by, then=Value(0)),
+                When(role=GroupMembership.Role.ADMIN, then=Value(1)),
+                When(role=GroupMembership.Role.MEMBER, then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("role_order", "user__username")
+    )
 
-        context["already_requested"] = GroupRequest.objects.filter(group=self.object, requested_by=self.request.user).exists()
-        context["is_admin"] = is_admin
-        context["join_requests"] = GroupRequest.objects.filter(group=self.object).select_related("requested_by") if is_admin else []
-        context["recent_posts"] = posts[:10]
-        context["recent_games"] = [p.game for p in context["recent_posts"]]
-        context["total_posts"] = posts.count()
-        context["memberships"] = memberships  # <<< usar no template
-        context["players"] = [gm.user for gm in memberships]  # se algo ainda usar
-        context["is_member"] = is_member
-        return context
+    is_member = GroupMembership.objects.filter(user=request.user, group=group).exists()
+    is_admin = GroupMembership.objects.filter(user=request.user, group=group, role=GroupMembership.Role.ADMIN).exists()
+    is_creator = (request.user == group.created_by)
+    already_requested = GroupRequest.objects.filter(group=group, requested_by=request.user).exists()
+    join_requests = GroupRequest.objects.filter(group=group).select_related("requested_by") if is_admin else []
+
+    context = {
+        "group": group,
+        "already_requested": already_requested,
+        "is_admin": is_admin,
+        "is_creator": is_creator,
+        "is_member": is_member,
+        "join_requests": join_requests,
+        "recent_posts": posts[:10],
+        "recent_games": [p.game for p in posts[:10]],
+        "total_posts": posts.count(),
+        "memberships": memberships,
+        "players": [gm.user for gm in memberships],
+    }
+    return render(request, "group_detail.html", context)
 
 @login_required
 @group_admin_required
@@ -300,7 +304,7 @@ def group_leave_view(request, slug):
     is_creator = group.created_by_id == request.user.id
 
     if is_creator:
-        # Find the oldest admin (excluding the creator)
+        
         oldest_admin = (
             GroupMembership.objects
             .filter(group=group, role=GroupMembership.Role.ADMIN)
@@ -315,7 +319,7 @@ def group_leave_view(request, slug):
 
             messages.info(request, f"O título de criador foi transferido para {oldest_admin.user.username}.")
         else:
-            # No admins, pick the oldest member (excluding the creator)
+            
             oldest_member = (
             GroupMembership.objects
             .filter(group=group)
@@ -327,12 +331,12 @@ def group_leave_view(request, slug):
             if oldest_member:
                 group.created_by = oldest_member.user
                 group.save(update_fields=["created_by"])
-                # Promove o novo criador a ADMIN
+                
                 oldest_member.role = GroupMembership.Role.ADMIN
                 oldest_member.save(update_fields=["role"])
                 messages.info(request, f"O título de criador de {group} foi transferido para {oldest_member.user.username}.")
             else:
-                # No one left to transfer, just delete the group
+                
                 group.delete()
                 messages.success(request, f"Você era o último membro. O grupo “{group.name}” foi deletado.")
                 return redirect("core:group_list")
@@ -346,12 +350,12 @@ def group_leave_view(request, slug):
     return redirect("core:group_list")
 
 @login_required
-@group_admin_required
+@group_creator_required
 @require_http_methods(["GET", "POST"])
 def group_edit_view(request, slug):
     group = get_object_or_404(Group, slug=slug)
 
-    # só admins (decorator já garante) — criador idem
+    
     form = GroupForm(request.POST or None, request.FILES or None, instance=group)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -365,7 +369,7 @@ def group_edit_view(request, slug):
         "back_url": reverse("core:group_detail", kwargs={"slug": group.slug}),
     })
 @login_required
-@group_admin_required
+@group_creator_required
 def group_delete_view(request, slug):
     group = get_object_or_404(Group, slug=slug)
     if request.method == "POST":
@@ -409,27 +413,20 @@ def game_detail_view(request, pk: int):
 
     session_key = f"last_group_for_game_{pk}"
 
-    # 1) Captura robusta do slug: GET -> sessão -> None
     candidate_slug = (request.GET.get("from_group") or request.session.get(session_key) or "").strip() or None
-    print("candidate_slug:", candidate_slug)
 
     from_group = None
     if candidate_slug:
-        # Tenta carregar o Group primeiro
         grp = Group.objects.only("id", "name", "slug").filter(slug=candidate_slug).first()
-        print("group_obj_found?", bool(grp))
 
         is_valid = False
         if grp:
-            # Validação 1: jogo pertence ao grupo via M2M?
+
             in_m2m = game.groups.filter(pk=grp.pk).exists()
-            print("in_m2m:", in_m2m)
             if in_m2m:
                 is_valid = True
             else:
-                # Validação 2: existe GamePost com esse jogo e esse grupo?
                 posted = GamePost.objects.filter(game_id=pk, group_id=grp.pk).exists()
-                print("posted_via_gamepost:", posted)
                 if posted:
                     is_valid = True
 
@@ -437,10 +434,8 @@ def game_detail_view(request, pk: int):
             from_group = grp
             request.session[session_key] = grp.slug
         else:
-            # inválido → limpar sessão
             request.session.pop(session_key, None)
 
-    # Permissões de edição
     is_creator = request.user.is_authenticated and (game.created_by_id == request.user.id)
     is_group_creator = request.user.is_authenticated and Group.objects.filter(
         id__in=game.groups.values_list("id", flat=True),
@@ -453,7 +448,6 @@ def game_detail_view(request, pk: int):
     buy_in = game.buy_in or 0
     total_pot = sum((buy_in + (p.rebuy or 0)) for p in participations)
 
-    print("from_group:", from_group)
     return render(
         request,
         "game_detail.html",
@@ -478,27 +472,24 @@ def game_edit_view(request, pk: int):
     if game.created_by_id != request.user.id and not is_group_creator:
         return HttpResponseForbidden("Você não pode editar esta partida.")
 
-    # inicial selecionando grupos já “postados”
     posted_group_ids = list(
         GamePost.objects.filter(game=game).values_list("group_id", flat=True)
     )
-
-    # form precisa de user para limitar os grupos que aparecem
+    
     form = GameForm(
         request.POST or None,
         user=request.user,
         instance=game,
     )
-    # deixe os grupos marcados na tela GET
+    
     if request.method == "GET":
         form.fields["groups"].initial = posted_group_ids
 
     if request.method == "POST" and form.is_valid():
-        game = form.save()  # já mantém created_by igual
-        # sincronizar os GamePosts com o que veio do form
+        game = form.save()  
+        
         new_group_ids = list(map(int, request.POST.getlist("groups")))
-
-        # cria posts novos
+    
         to_add = set(new_group_ids) - set(posted_group_ids)
         for gid in to_add:
             group = Group.objects.filter(pk=gid).first()
@@ -509,7 +500,7 @@ def game_edit_view(request, pk: int):
                     defaults={"posted_by": request.user},
                 )
 
-        # remove posts que saíram
+        
         to_remove = set(posted_group_ids) - set(new_group_ids)
         if to_remove:
             GamePost.objects.filter(game=game, group_id__in=to_remove).delete()
@@ -560,7 +551,7 @@ def participation_edit_view(request, pk: int, part_id: int):
     game = get_object_or_404(Game, pk=pk)
     participation = get_object_or_404(GameParticipation, pk=part_id, game=game)
 
-    # regra: quem pode editar? criador do jogo; opcionalmente o próprio jogador.
+    
     is_game_owner = (game.created_by_id == request.user.id)
     is_self = (participation.player_id == request.user.id)
     is_group_creator = Group.objects.filter(
@@ -606,7 +597,7 @@ def participation_delete_view(request, pk: int, part_id: int):
 class RememberMeLoginView(LoginView):
     template_name = "account/login.html"
     authentication_form = LoginForm
-    redirect_authenticated_user = True  # já logado vai pro destino
+    redirect_authenticated_user = True  
 
     def form_valid(self, form):
         remember = form.cleaned_data.get("remember_me")
@@ -619,7 +610,7 @@ class PasswordResetView(auth_views.PasswordResetView):
     email_template_name = "account/password_reset_email.txt"
     subject_template_name = "account/password_reset_subject.txt"
     success_url = reverse_lazy("core:password_reset_done")
-    from_email = "teampokerdex@gmail.com"  # defina seu remetente
+    from_email = "teampokerdex@gmail.com"  
 
 class PasswordResetDoneView(auth_views.PasswordResetDoneView):
     template_name = "account/password_reset_done.html"
