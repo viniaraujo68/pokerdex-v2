@@ -17,6 +17,7 @@ from .models import Group, GroupMembership, Game, GamePost, GameParticipation, G
 from .services import create_group_with_admin
 from django.http import HttpResponseForbidden
 from django.views.decorators.http import require_http_methods
+from django.db.models import Q
 
 def group_admin_required(view_func):
     def _wrapped_view(request, slug, *args, **kwargs):
@@ -32,26 +33,20 @@ def group_admin_required(view_func):
 
 @login_required
 def group_list_view(request):
-    my_groups = (
-        Group.objects
-        .filter(
-            id__in=GroupMembership.objects
-                .filter(user=request.user)
-                .values("group_id")
-        )
-        .select_related("created_by")
-        .annotate(
-            member_count=models.Count("memberships", distinct=True),
-            post_count=models.Count("posts", distinct=True),
-            last_post=models.Max("posts__posted_at"),
-        )
-        .order_by("name")
-    )
+    q = request.GET.get("q", "")
 
-    other_groups = Group.objects.exclude(id__in=GroupMembership.objects
-                .filter(user=request.user)
-                .values("group_id")).order_by("name")
-    return render(request, "group_list.html", {"my_groups": my_groups, "other_groups": other_groups})
+    my_groups = Group.objects.filter(memberships__user=request.user)
+    other_groups = Group.objects.exclude(memberships__user=request.user)
+
+    if q:
+        my_groups = my_groups.filter(Q(name__icontains=q) | Q(description__icontains=q))
+        other_groups = other_groups.filter(Q(name__icontains=q) | Q(description__icontains=q))
+
+    return render(
+        request,
+        "group_list.html",
+        {"my_groups": my_groups, "other_groups": other_groups},
+    )
 
 class GroupDetailView(DetailView):
     model = Group

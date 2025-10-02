@@ -1,5 +1,4 @@
---author="viniaraujo68 <viniaraujoaraujo.va@gmail.com>"{% extends "base.html" %}
-
+{% extends "base.html" %}
 {% block title %}Grupos | Pokerdex{% endblock %}
 
 {% block content %}
@@ -17,9 +16,6 @@
     </a>
   </div>
   {% endif %}
-  <a href="{% url 'core:group_create' %}" class="btn btn-sm btn-primary">
-    + Criar grupo
-  </a>
 </div>
 
 <section class="mb-4">

@@ -18,18 +18,32 @@
 <body class="d-flex flex-column min-vh-100">
 
   <header class="mb-3">
-    <nav class="navbar navbar-dark bg-dark px-3">
+    <nav class="navbar navbar-dark bg-dark px-3>
       <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'core:group_list' %}">
         <img src="{% static 'img/hedgehog.png' %}" class="brand-logo">
         <span>Pokerdex</span>
       </a>
-      <div class="ms-auto">
+
+      {% if request.user.is_authenticated %}
+       <div class="position-absolute top-50 start-50 translate-middle" style="width: 400px; max-width: 60%;">
+          <form method="get" action="{% url 'core:group_list' %}" class="d-flex">
+            <input type="text" name="q" value="{{ request.GET.q }}"
+                   class="form-control form-control-sm"
+                   placeholder="Buscar grupos...">
+            <button type="submit" class="btn btn-sm btn-outline-light ms-2">
+              <i class="bi bi-search"></i>
+            </button>
+          </form>
+        </div>
+      {% endif %}
+
+      <div class="ms-auto d-flex align-items-center">
         {% if request.user.is_authenticated %}
           <a class="btn btn-groups me-2" href="{% url 'core:group_list' %}">
             <i class="bi bi-people-fill"></i>
             Grupos
           </a>
-          <a href="{% url 'core:game_create' %}" class="btn btn-create-game">
+          <a href="{% url 'core:game_create' %}" class="btn btn-create-game me-2">
             <i class="bi bi-cash-stack"></i>
             Nova noite
           </a>
