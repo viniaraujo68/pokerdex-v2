@@ -20,7 +20,7 @@
 body{
   background:var(--bg);
   color:var(--text);
-  font-family:"Segoe UI", Roboto, system-ui, -apple-system, sans-serif;
+  font-family: "Ubuntu", sans-serif;
 }
 
 .navbar-brand img,
@@ -336,7 +336,7 @@ form .form-control:focus{
   color: #111;
 }
 
-/* Nova Partida - vermelho pôquer */
+
 .btn-create-game {
   background: linear-gradient(135deg, var(--success) 0%, #17953b 100%);
   color: #fff;
@@ -390,7 +390,7 @@ form .form-control:focus{
 }
 
 .btn-promote {
-  position: relative;              /* cria stacking context */
+  position: relative;              
   background: transparent;
   color: #fff;
   border: none;
@@ -401,24 +401,24 @@ form .form-control:focus{
   align-items: center;
   justify-content: center;
   gap: .3rem;
-  overflow: hidden;                /* clipa o overlay nas bordas */
+  overflow: hidden;                
   transition: transform .12s ease, box-shadow .2s ease;
 }
 
-/* overlay do gradiente */
+
 .btn-promote::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  pointer-events: none;            /* não bloqueia clique */
+  pointer-events: none;            
   background: linear-gradient(135deg, #257fa2 0%, #0e5988 100%);
-  opacity: 0;                      /* começa invisível */
-  transition: opacity .2s ease;    /* anima suavemente */
-  z-index: 0;                      /* fica ATRÁS do conteúdo */
+  opacity: 0;                      
+  transition: opacity .2s ease;    
+  z-index: 0;                      
 }
 
-/* garante que o conteúdo (ícone/texto) fique acima do overlay */
+
 .btn-promote > * {
   position: relative;
   z-index: 1;
@@ -429,11 +429,11 @@ form .form-control:focus{
   box-shadow: 0 0 0 .25rem rgba(27,124,185,.35);
 }
 .btn-promote:hover::before {
-  opacity: 1;                      /* fade-in do gradiente */
+  opacity: 1;                      
 }
 
 .btn-demote {
-  position: relative;              /* cria stacking context */
+  position: relative;              
   background: transparent;
   color: #fff;
   border: none;
@@ -443,24 +443,24 @@ form .form-control:focus{
   align-items: center;
   justify-content: center;
   gap: .3rem;
-  overflow: hidden;                /* clipa o overlay nas bordas */
+  overflow: hidden;                
   transition: transform .12s ease, box-shadow .2s ease;
 }
 
-/* overlay do gradiente */
+
 .btn-demote::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  pointer-events: none;            /* não bloqueia clique */
+  pointer-events: none;            
   background: linear-gradient(135deg, #e0630a 0%, #ed741c 100%);
-  opacity: 0;                      /* começa invisível */
-  transition: opacity .2s ease;    /* anima suavemente */
-  z-index: 0;                      /* fica ATRÁS do conteúdo */
+  opacity: 0;                      
+  transition: opacity .2s ease;    
+  z-index: 0;                      
 }
 
-/* garante que o conteúdo (ícone/texto) fique acima do overlay */
+
 .btn-demote > * {
   position: relative;
   z-index: 1;
@@ -471,11 +471,11 @@ form .form-control:focus{
   box-shadow: 0 0 0 .25rem rgba(135, 68, 26, 0.35);
 }
 .btn-demote:hover::before {
-  opacity: 1;                      /* fade-in do gradiente */
+  opacity: 1;                      
 }
 
 .btn-remove {
-  position: relative;              /* cria stacking context */
+  position: relative;              
   background: transparent;
   color: #fff;
   border: none;
@@ -485,24 +485,24 @@ form .form-control:focus{
   align-items: center;
   justify-content: center;
   gap: .3rem;
-  overflow: hidden;                /* clipa o overlay nas bordas */
+  overflow: hidden;                
   transition: transform .12s ease, box-shadow .2s ease;
 }
 
-/* overlay do gradiente */
+
 .btn-remove::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  pointer-events: none;            /* não bloqueia clique */
+  pointer-events: none;            
   background: linear-gradient(135deg, #ab1c11 0%, #e02814 100%);
-  opacity: 0;                      /* começa invisível */
-  transition: opacity .2s ease;    /* anima suavemente */
-  z-index: 0;                      /* fica ATRÁS do conteúdo */
+  opacity: 0;                      
+  transition: opacity .2s ease;    
+  z-index: 0;                      
 }
 
-/* garante que o conteúdo (ícone/texto) fique acima do overlay */
+
 .btn-remove > * {
   position: relative;
   z-index: 1;
@@ -513,7 +513,7 @@ form .form-control:focus{
   box-shadow: 0 0 0 .25rem rgba(122, 16, 17, 0.35);
 }
 .btn-remove:hover::before {
-  opacity: 1;                      /* fade-in do gradiente */
+  opacity: 1;                      
 }
 
 .btn-promote i,
@@ -522,9 +522,9 @@ form .form-control:focus{
   font-size: 1rem;
 }
 
-/* Glass buttons (funciona bem em bg escuro) */
+
 .btn-glass {
-  --glass-r: 255; --glass-g: 255; --glass-b: 255; /* default = branco */
+  --glass-r: 255; --glass-g: 255; --glass-b: 255; 
   --glass-text: 255,255,255;
   --glass-blur: 6px;
   --glass-alpha: .08;
@@ -540,7 +540,7 @@ form .form-control:focus{
   );
   backdrop-filter: blur(var(--glass-blur)) saturate(140%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  border-radius: 9999px; /* pill */
+  border-radius: 9999px; 
   transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background-color .15s ease, color .15s ease;
 }
 
@@ -570,30 +570,30 @@ form .form-control:focus{
   box-shadow: 0 0 0 .2rem rgba(var(--glass-r), var(--glass-g), var(--glass-b), .25);
 }
 
-/* Variantes por cor (definem a borda, o fill translúcido e o texto) */
+
 .btn-glass-gold {
-  --glass-r: 255; --glass-g: 215; --glass-b: 0;        /* gold */
+  --glass-r: 255; --glass-g: 215; --glass-b: 0;        
   --glass-text: 255,215,0;
 }
 
 .btn-glass-danger {
-  --glass-r: 220; --glass-g: 53;  --glass-b: 69;       /* bootstrap danger */
-  --glass-text: 255,186,193;                           /* leve rosado p/ contraste */
+  --glass-r: 220; --glass-g: 53;  --glass-b: 69;       
+  --glass-text: 255,186,193;                           
 }
 
 .btn-glass-light {
-  --glass-r: 248; --glass-g: 249; --glass-b: 250;      /* bootstrap light */
+  --glass-r: 248; --glass-g: 249; --glass-b: 250;      
   --glass-text: 255,255,255;
   border-color: rgba(255,255,255,.55);
 }
 
 .btn-glass-green {
-  --glass-r: 40; --glass-g: 167; --glass-b: 69;      /* bootstrap success */
+  --glass-r: 40; --glass-g: 167; --glass-b: 69;      
   --glass-text: 255,255,255;
   border-color: rgba(255,255,255,.55);
 }
 
-/* Tamanho/espacamento e alinhamento */
+
 .btn-glass.btn-sm {
   padding: .35rem .75rem;
   font-weight: 600;
@@ -605,13 +605,13 @@ form .form-control:focus{
 @media (min-width: 768px) { .d-md-label .label-text { display: inline; } }
 
 
-/* Base: ícone-only, sem borda, com glow no hover */
+
 .btn-icon-ghost {
-  --btn-rgb: 255,255,255;            /* fallback */
+  --btn-rgb: 255,255,255;            
   position: relative;
   background: transparent;
   border: 0;
-  padding: .35rem;                   /* toque pro alvo ficar clicável */
+  padding: .35rem;                   
   border-radius: 8px;
   color: rgb(var(--btn-rgb));
   display: inline-flex;
@@ -623,12 +623,12 @@ form .form-control:focus{
 
 .btn-icon-ghost i {
   position: relative;
-  z-index: 1;                        /* mantém o ícone acima do glow */
+  z-index: 1;                        
   font-size: 1.05rem;
   transition: transform .18s ease;
 }
 
-/* Glow redondo por trás do ícone */
+
 .btn-icon-ghost::before {
   content: "";
   position: absolute;
@@ -656,11 +656,11 @@ form .form-control:focus{
   outline: none;
 }
 
-/* Variantes de cor */
-.btn-approve { --btn-rgb: 25, 135, 84; }   /* bootstrap success (#198754) */
-.btn-reject  { --btn-rgb: 220, 53, 69; }   /* bootstrap danger  (#dc3545) */
 
-/* (opcional) desabilitado */
+.btn-approve { --btn-rgb: 25, 135, 84; }   
+.btn-reject  { --btn-rgb: 220, 53, 69; }   
+
+
 .btn-icon-ghost:disabled { opacity: .5; pointer-events: none; }
 
 .back-link i {
@@ -673,17 +673,17 @@ form .form-control:focus{
   transform: translateX(-2px);
 }
 
-/* wrapper para dar “respiro” vertical */
+
 .back-link-area { margin: .25rem 0 1.5rem; }
 
-/* link “fundido” com o fundo (sem borda/bg) */
+
 .back-link-ghost {
   color: var(--label-color, rgba(255,255,255,.72));
   text-decoration: none;
   background: transparent;
   border: 0;
   position: relative;
-  padding: .25rem 0;           /* hit area mínima vertical */
+  padding: .25rem 0;           
   transition: color .2s ease, opacity .2s ease;
 }
 
@@ -692,7 +692,7 @@ form .form-control:focus{
   transition: color .2s ease, transform .18s ease, opacity .2s ease;
 }
 
-/* sublinhado discreto que “cresce” ao hover */
+
 .back-link-ghost::after {
   content: "";
   position: absolute;
@@ -720,5 +720,52 @@ form .form-control:focus{
 
 .back-link-ghost:focus-visible {
   outline: none;
-  text-decoration: none;      /* mantemos só a barrinha custom */
+  text-decoration: none;      
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-box input {
+  background: var(--textarea);
+  border: 1px solid var(--border);
+  border-radius: 999px; 
+  color: var(--text);
+  padding: .45rem 2.2rem .45rem .9rem; 
+  width: 100%;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.search-box input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 .15rem var(--gold-soft);
+  outline: none;
+}
+
+.search-box button {
+  position: absolute;
+  right: .65rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.search-box button:hover {
+  color: var(--gold);
+}
+
+input.text-light::placeholder {
+  color: #7c7c7c
+}
+
+.my-groups-section { 
+  margin-bottom: 5rem;
 }

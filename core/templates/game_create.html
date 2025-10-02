@@ -19,9 +19,8 @@
         <label class="form-label">Postar em grupos</label>
 
         <div class="toggle-group d-flex flex-wrap gap-2">
-          {# Itera pelos subwidgets (cada checkbox) #}
         {% for cb in field %}
-          {{ cb.tag }}  {# deixa o Django gerar o <input> corretamente #}
+          {{ cb.tag }}  
           <label for="{{ cb.id_for_label }}" class="toggle-btn">
             {{ cb.choice_label }}
           </label>
