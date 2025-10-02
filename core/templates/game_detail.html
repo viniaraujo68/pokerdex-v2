@@ -5,7 +5,7 @@
 {% block content %}
 {% if from_group %}
 {% url 'core:group_detail' slug=from_group.slug as group_url %}
-{% include "includes/back_to_link.html" with href=group_url label="Voltar ao grupo" icon="bi-arrow-left-circle" %}
+{% include "includes/back_to_link.html" with href=group_url label="Voltar ao grupo" icon="bi-chevron-left" %}
 {% endif %}
 
 <div class="card bg-dark border-secondary text-light mb-3">
@@ -24,16 +24,17 @@
       </div>
     </div>
     {% if can_edit_game %}
-      <a class="btn btn-sm btn-outline-primary" href="{% url 'core:game_edit' pk=game.pk %}">Editar partida</a>
+      <a class="btn btn-sm btn-glass btn-glass-gold btn-icon-gap d-md-label" href="{% url 'core:game_edit' pk=game.pk %}"><i class="bi bi-pencil-fill"></i>Editar</a>
       <form class="d-inline" method="post" action="{% url 'core:game_delete' pk=game.pk %}">
         {% csrf_token %}
-        <button class="btn btn-sm btn-outline-danger" type="submit">Excluir</button>
+        <button class="btn btn-sm btn-glass btn-glass-danger btn-icon-gap d-md-label" type="submit"><i class="bi bi-trash3-fill"></i> Excluir</button>
       </form>
     {% endif %}
     {% if participations %}
       <div class="ms-md-auto d-flex gap-2">
-        <a href="{% url 'core:participation_add' game.pk %}" class="btn btn-sm btn-outline-warning">
-          + Adicionar participação
+        <a href="{% url 'core:participation_add' game.pk %}" class="btn btn-sm btn-glass btn-glass-green btn-icon-gap d-md-label">
+          <i class="bi bi-person-fill-add"></i>
+          Adicionar participante
         </a>
       </div>
     {% endif %}
@@ -50,7 +51,7 @@
 {% endif %}
 
 {% if participations %}
-<div class="card bg-dark border-secondary text-light card-hover">
+<div class="card bg-dark border-secondary text-light">
   <div class="card-body">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2 class="h5 m-0">Participações</h2>
@@ -67,27 +68,27 @@
 
         <div class="text-end">
           <div class="d-flex align-items-center gap-2 justify-content-end">
-            {% if can_edit_game or request.user.id == p.player_id %}
-              <a class="btn btn-xs btn-outline-primary" href="{% url 'core:participation_edit' pk=game.pk part_id=p.pk %}">Editar</a>
-              <form class="d-inline" method="post" action="{% url 'core:participation_delete' pk=game.pk part_id=p.pk %}">
-                {% csrf_token %}
-                <button class="btn btn-xs btn-outline-danger" type="submit">Excluir</button>
-              </form>
-            {% endif %}
             <div class="amount
-                {% if p.final_balance > invested %}
-                  amount-win
-                {% elif p.final_balance < invested %}
-                  amount-loss
-                {% else %}
-                  amount-even
-                {% endif %}">
-              R$ {{ p.final_balance }}
-            </div>
-
-            <span class="chip chip-neutral" title="Rebuy">
-              ↻ R$ {{ p.rebuy|default:0 }}
-            </span>
+            {% if p.final_balance > invested %}
+            amount-win
+            {% elif p.final_balance < invested %}
+            amount-loss
+            {% else %}
+            amount-even
+            {% endif %}">
+            R$ {{ p.final_balance }}
+          </div>
+          
+          <span class="chip chip-neutral" title="Rebuy">
+            ↻ R$ {{ p.rebuy|default:0 }}
+          </span>
+          {% if can_edit_game or request.user.id == p.player_id %}
+            <a class="btn btn-xs btn-promote" href="{% url 'core:participation_edit' pk=game.pk part_id=p.pk %}"><i class="bi bi-pencil-fill"></i></a>
+            <form class="d-inline" method="post" action="{% url 'core:participation_delete' pk=game.pk part_id=p.pk %}">
+              {% csrf_token %}
+              <button class="btn btn-xs btn-remove" type="submit"><i class="bi bi-trash3-fill"></i></button>
+            </form>
+          {% endif %}
           </div>
         </div>
       </li>

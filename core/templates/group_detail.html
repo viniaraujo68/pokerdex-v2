@@ -4,7 +4,7 @@
 
 {% block content %}
 {% url 'core:group_list' as groups_url %}
-{% include "includes/back_to_link.html" with href=groups_url label="Voltar aos grupos" icon="bi-arrow-left-circle" %}
+{% include "includes/back_to_link.html" with href=groups_url label="Voltar aos grupos" icon="bi-chevron-left" %}
 
 <div class="group-hero card bg-dark border-secondary text-light mb-3">
   <div class="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
@@ -21,21 +21,47 @@
 
     <div class="ms-md-auto d-flex flex-wrap gap-2">
       {% if request.user.is_authenticated and is_member %}
-        {% if is_admin %}
-          <a class="btn btn-sm btn-outline-primary" href="{% url 'core:group_edit' slug=group.slug %}">Editar grupo</a>
+
+        {% if is_creator %}
+          <!-- Editar: vidro dourado -->
+          <a
+            href="{% url 'core:group_edit' slug=group.slug %}"
+            class="btn btn-sm btn-glass btn-glass-gold btn-icon-gap d-md-label"
+            title="Editar grupo"
+          >
+            <i class="bi bi-pencil-fill"></i>
+            <span class="label-text">Editar</span>
+          </a>
+
+          <!-- Excluir: vidro danger -->
           <form action="{% url 'core:group_delete' group.slug %}" method="post" class="m-0">
             {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-outline-danger"
-                    onclick="return confirm('Tem certeza que deseja deletar este grupo? Essa ação é irreversível.');">
-              🗑 Excluir grupo
+            <button
+              type="submit"
+              class="btn btn-sm btn-glass btn-glass-danger btn-icon-gap d-md-label"
+              onclick="return confirm('Tem certeza que deseja deletar este grupo? Essa ação é irreversível.');"
+              title="Excluir grupo"
+            >
+              <i class="bi bi-trash3-fill"></i>
+              <span class="label-text">Excluir</span>
             </button>
           </form>
         {% endif %}
 
+        <!-- Sair: vidro claro -->
         <form action="{% url 'core:group_leave' slug=group.slug %}" method="post" class="m-0">
           {% csrf_token %}
-          <button type="submit" class="btn btn-sm btn-outline-light">Sair do grupo</button>
+          <button
+            type="submit"
+            class="btn btn-sm btn-glass btn-glass-light btn-icon-gap d-md-label"
+            onclick="return confirm('Tem certeza que deseja sair deste grupo?');"
+            title="Sair do grupo"
+          >
+            <i class="bi bi-box-arrow-right"></i>
+            <span class="label-text">Sair</span>
+          </button>
         </form>
+
       {% endif %}
     </div>
   </div>
@@ -68,7 +94,6 @@
                     {% endif %}
                   </div>
 
-
                   {% if is_admin %}
                     <div class="d-flex gap-2">
                       {% if gm.user != group.created_by and gm.user != request.user %}
@@ -98,13 +123,11 @@
                       {% endif %}
                     </div>
                   {% endif %}
-
-
                 </li>
               {% endfor %}
             </ul>
           {% else %}
-            <div class="text-muted">Nenhum participante neste grupo ainda.</div>
+            <div>Nenhum participante neste grupo ainda.</div>
           {% endif %}
         </div>
       </div>
@@ -130,7 +153,7 @@
                     {{ post.game.date|date:"d/m/Y" }} · Buy-in: R$ {{ post.game.buy_in }}
                   </div>
                   <div class="small text-muted">
-                    postado por {{ post.posted_by }} em {{ post.posted_at|date:"d/m/Y H:i" }}
+                    Postado por {{ post.posted_by }} em {{ post.posted_at|date:"d/m/Y - H:i" }}
                   </div>
                 </a>
               {% endfor %}
@@ -140,15 +163,16 @@
               <p class="small text-muted mt-2"><em>Há mais partidas antigas… (pagine depois)</em></p>
             {% endif %}
           {% else %}
-            <div class="text-muted">Nenhuma partida postada neste grupo ainda.</div>
+            <div>Nenhuma partida postada neste grupo ainda.</div>
           {% endif %}
+          <p></p>
         </div>
       </div>
     </div>
   </div>
 
   {% if is_admin and join_requests %}
-    <div class="card bg-dark border-secondary text-light mt-3 card-hover">
+    <div class="card bg-dark border-secondary text-light mt-3">
       <div class="card-body">
         <h2 class="h5 mb-3">Solicitações de entrada pendentes</h2>
         <ul class="list-group list-group-flush">
@@ -161,11 +185,15 @@
               <div class="d-flex gap-2">
                 <form action="{% url 'core:group_approve_request' slug=group.slug request_id=req.id %}" method="post" class="m-0">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-outline-success">Aprovar</button>
+                  <button type="submit" class="btn btn-sm btn-icon-ghost btn-approve" title="Aprovar" aria-label="Aprovar">
+                    <i class="bi bi-check2"></i>
+                  </button>
                 </form>
                 <form action="{% url 'core:group_reject_request' slug=group.slug request_id=req.id %}" method="post" class="m-0">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-outline-danger">Rejeitar</button>
+                  <button type="submit" class="btn btn-sm btn-icon-ghost btn-reject" title="Rejeitar" aria-label="Rejeitar">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
                 </form>
               </div>
             </li>
