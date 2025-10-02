@@ -6,9 +6,16 @@
 <div class="d-flex align-items-center justify-content-between mb-3">
   <h1 class="h3 m-0">Grupos</h1>
   {% if groups %}
-  <a href="{% url 'core:group_create' %}" class="btn btn-sm btn-primary">
-    + Criar grupo
-  </a>
+  <div>
+    <a href="{% url 'core:game_create' %}" class="btn btn-create-game">
+      <i class="bi bi-cash-stack"></i>
+      Nova noite
+    </a>
+    <a href="{% url 'core:group_create' %}" class="btn btn-create-group">
+      <i class="bi bi-people-fill"></i>
+      Novo grupo
+    </a>
+  </div>
   {% endif %}
 </div>
 
@@ -62,17 +69,11 @@
   <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; margin-top: 60px;">
     <h1>Ops!</h1>
     <span>Parece que você não está em nenhum grupo ainda.</span>
-    <a style="margin-top: 30px;"href="{% url 'core:group_create' %}" class="btn btn-sm btn-primary">
-    + Criar seu primeiro grupo
+    <a href="{% url 'core:group_create' %}" class="btn btn-create-group">
+    <i class="bi bi-dice-5-fill"></i>
+      Criar novo grupo
     </a>
   </div>
 {% endif %}
 
-{% if groups %}
-<div class="mt-3">
-  <a href="{% url 'core:game_create' %}" class="btn btn-outline-warning">
-    + Nova partida
-  </a>
-</div>
-{% endif %}
 {% endblock %}
