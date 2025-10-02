@@ -32,7 +32,7 @@ def group_admin_required(view_func):
 
 @login_required
 def group_list_view(request):
-    groups = (
+    my_groups = (
         Group.objects
         .filter(
             id__in=GroupMembership.objects
@@ -47,7 +47,11 @@ def group_list_view(request):
         )
         .order_by("name")
     )
-    return render(request, "group_list.html", {"groups": groups})
+
+    other_groups = Group.objects.exclude(id__in=GroupMembership.objects
+                .filter(user=request.user)
+                .values("group_id")).order_by("name")
+    return render(request, "group_list.html", {"my_groups": my_groups, "other_groups": other_groups})
 
 class GroupDetailView(DetailView):
     model = Group
