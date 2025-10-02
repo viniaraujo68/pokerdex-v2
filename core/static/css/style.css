@@ -769,3 +769,20 @@ input.text-light::placeholder {
 .my-groups-section { 
   margin-bottom: 5rem;
 }
+
+.money-input {
+  padding-left: 2rem;
+  background: var(--textarea);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  position: relative;
+}
+.money-input::before {
+  content: "R$";
+  position: absolute;
+  left: .75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+}

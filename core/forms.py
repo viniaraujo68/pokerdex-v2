@@ -41,6 +41,17 @@ class GameForm(forms.ModelForm):
     class Meta:
         model = Game
         fields = ["title", "date", "location", "buy_in"]
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "buy_in": forms.NumberInput(
+                attrs={
+                    "class": "form-control money-input",
+                    "inputmode": "decimal", 
+                    "step": "1.00", 
+                    "placeholder": "2500,00"
+                },
+            )
+        }
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -69,52 +80,50 @@ class GameParticipationForm(forms.ModelForm):
     def __init__(self, *args, game=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.game = game or getattr(self.instance, "game", None)
-        if self.game:
-            self.instance.game = self.game
+        if not self.game:
+            return
 
-            group_ids = list(self.game.groups.values_list("id", flat=True))
+        self.instance.game = self.game
 
-            if group_ids:
-                # usuários que são membros de TODOS os grupos (interseção)
-                eligible_players = (
-                    User.objects
-                    .filter(group_memberships__group_id__in=group_ids)  # <-- corrigido
-                    .annotate(
-                        gcount=Count(
-                            "group_memberships__group_id",               # <-- corrigido
-                            filter=Q(group_memberships__group_id__in=group_ids),
-                            distinct=True,
-                        )
-                    )
-                    .filter(gcount=len(group_ids))
-                )
-            else:
-                eligible_players = User.objects.none()
+        group_ids = list(self.game.groups.values_list("id", flat=True))
 
-            already_in_game = GameParticipation.objects.filter(
-                game=self.game
-            ).values_list("player_id", flat=True)
-            eligible_players = eligible_players.exclude(pk__in=already_in_game)
+        if group_ids:
+            eligible_players = User.objects.all()
+            for gid in group_ids:
+                eligible_players = eligible_players.filter(group_memberships__group_id=gid)
+            eligible_players = eligible_players.distinct()
+        else:
+            eligible_players = User.objects.none()
+        
+        already_in_game = list(
+            GameParticipation.objects
+            .filter(game=self.game)
+            .values_list("player_id", flat=True)
+        )
 
-            if self.instance.pk and getattr(self.instance, "player_id", None):
-                eligible_players = User.objects.filter(pk=self.instance.player_id) | eligible_players
+        
+        if self.instance.pk and getattr(self.instance, "player_id", None):
+            try:
+                already_in_game.remove(self.instance.player_id)
+            except ValueError:
+                pass  
 
-            self.fields["player"].queryset = eligible_players.order_by("username")
+        eligible_players = eligible_players.exclude(pk__in=already_in_game)
+
+        self.fields["player"].queryset = eligible_players.order_by("username")
 
     def clean_player(self):
         player = self.cleaned_data.get("player")
         game = getattr(self.instance, "game", None)
         if not player or not game:
             return player
-
-        # evita duplicata
+ 
         qs = GameParticipation.objects.filter(game=game, player=player)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise forms.ValidationError("Este jogador já foi adicionado a esta partida.")
 
-        # defesa extra: garantir que pertence a TODOS os grupos do jogo
         group_ids = list(game.groups.values_list("id", flat=True))
         if group_ids:
             count_in_groups = (
@@ -127,8 +136,8 @@ class GameParticipationForm(forms.ModelForm):
                 raise forms.ValidationError(
                     "Este jogador não pertence a todos os grupos nos quais a partida foi postada."
                 )
-
         return player
+
 
 
 class LoginForm(AuthenticationForm):
