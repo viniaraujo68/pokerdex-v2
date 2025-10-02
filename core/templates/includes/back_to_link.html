@@ -1,9 +1,8 @@
-{% with label_text=label|default:"Voltar" icon_class=icon|default:"bi-arrow-left-circle" %}
+{# includes/back_to_link.html #}
 <a href="{{ href }}"
-   class="back-icon btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1 {{ classes }}"
-   aria-label="{{ label_text }}"
-   title="{{ label_text }}">
-  <i class="bi {{ icon_class }}"></i>
-  <span class="d-none d-sm-inline">{{ label_text }}</span>
+   class="mb-3 back-link btn btn-sm d-inline-flex align-items-center gap-1 {{ classes|default:'text-gray' }}"
+   aria-label="{{ label|default:'Voltar' }}"
+   title="{{ label|default:'Voltar' }}">
+  <i class="bi {{ icon|default:'bi-arrow-left-circle' }}"></i>
+  <span class="d-none d-sm-inline">{{ label|default:"Voltar" }}</span>
 </a>
-{% endwith %}
