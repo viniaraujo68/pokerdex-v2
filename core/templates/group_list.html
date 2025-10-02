@@ -1,11 +1,11 @@
-{% extends "base.html" %}
+--author="viniaraujo68 <viniaraujoaraujo.va@gmail.com>"{% extends "base.html" %}
 
 {% block title %}Grupos | Pokerdex{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-3">
   <h1 class="h3 m-0">Grupos</h1>
-  {% if groups %}
+  {% if my_groups %}
   <div>
     <a href="{% url 'core:game_create' %}" class="btn btn-create-game">
       <i class="bi bi-cash-stack"></i>
@@ -29,16 +29,6 @@
       <span class="badge bg-secondary">{{ my_groups|length }}</span>
     {% endif %}
   </div>
-{% else %}
-  <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; margin-top: 60px;">
-    <h1>Ops!</h1>
-    <span>Parece que você não está em nenhum grupo ainda.</span>
-    <a href="{% url 'core:group_create' %}" class="btn btn-create-group">
-    <i class="bi bi-dice-5-fill"></i>
-      Criar novo grupo
-    </a>
-  </div>
-{% endif %}
 
   <div class="gradient-bar mb-3"></div>
 
@@ -89,14 +79,16 @@
         </div>
       {% endfor %}
     </div>
-  {% else %}
-    <div class="text-center py-4">
-      <h3 class="h6 mb-2">Você ainda não participa de nenhum grupo.</h3>
-      <a href="{% url 'core:group_create' %}" class="btn btn-sm btn-primary mt-2">
-        + Criar seu primeiro grupo
-      </a>
-    </div>
-  {% endif %}
+{% else %}
+  <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; margin-top: 60px;">
+    <h1>Ops!</h1>
+    <span>Parece que você não está em nenhum grupo ainda.</span>
+    <a href="{% url 'core:group_create' %}" class="btn btn-create-group">
+    <i class="bi bi-dice-5-fill"></i>
+      Criar novo grupo
+    </a>
+  </div>
+{% endif %}
 </section>
 
 <section class="mb-2">
