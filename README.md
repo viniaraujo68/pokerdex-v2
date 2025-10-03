@@ -1,5 +1,11 @@
 # 🃏 Pokerdex
 
+## 👥 Autores
+- Francisco Lou — 2211275  
+- Vinicius Araujo — 2210392  
+
+---
+
 **Pokerdex** é uma plataforma para grupos de amigos e entusiastas de pôquer que desejam registrar e acompanhar suas noites de jogatina.  
 Com ela, é possível concluir quem mais ganha e quem mais perde e manter um histórico claro das partidas.
 
@@ -109,3 +115,10 @@ Dentro de um grupo, um **Usuário** pode ter até 3 papéis (com permissões cum
   1. O posto vai para o **administrador mais antigo**;  
   2. Se não houver administradores, vai para o **membro mais antigo**;  
   3. Se o criador for o único membro, o grupo é excluído.
+
+---
+
+## 🚧 Obstáculos pendentes
+
+- Tentamos implementar o envio de **redefinição de senha por e-mail**, mas não conseguimos concluir a integração com provedores de e-mail, apesar de sabermos que não era obrigatória.
+Tudo indicava que estava chegando, mas o email não chegava.
