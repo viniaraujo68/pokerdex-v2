@@ -19,6 +19,8 @@ from django.http import HttpResponseForbidden
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 
+# ========================== Decorators ==========================
+
 def group_admin_required(view_func):
     def _wrapped_view(request, slug, *args, **kwargs):
         group = get_object_or_404(Group, slug=slug)
@@ -38,6 +40,7 @@ def group_creator_required(view_func):
         return view_func(request, slug, *args, **kwargs)
     return _wrapped_view
 
+# =================================================================
 
 @login_required
 def group_list_view(request):
@@ -635,6 +638,13 @@ class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
     template_name = "account/password_reset_confirm.html"
     success_url = reverse_lazy("core:password_reset_complete")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = getattr(self, 'user', None)
+        if user:
+            context["username"] = getattr(user, "username", "")
+        return context
+
 class PasswordResetCompleteView(auth_views.PasswordResetCompleteView):
     template_name = "account/password_reset_complete.html"
     
@@ -645,9 +655,13 @@ def signup_view(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("core:group_list")
+            email = form.cleaned_data.get("email")
+            if User.objects.filter(email=email).exists():
+                form.add_error("email", "Este email já pertence a uma conta.")
+            else:
+                user = form.save()
+                login(request, user)
+                return redirect("core:group_list")
     else:
         form = SignUpForm()
     return render(request, "account/signup.html", {"form": form})

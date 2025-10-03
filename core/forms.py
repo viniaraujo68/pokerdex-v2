@@ -76,6 +76,13 @@ class GameParticipationForm(forms.ModelForm):
     class Meta:
         model = GameParticipation
         fields = ["player", "final_balance", "rebuy"]
+        widgets = {
+            "final_balance": forms.NumberInput(attrs={
+                "step": "1",          # incrementa de 0,50 em 0,50
+                "inputmode": "decimal", # teclado numérico no mobile
+                "class": "form-control"
+            }),
+        }
 
     def __init__(self, *args, game=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -160,7 +167,7 @@ class SignUpForm(UserCreationForm):
     username = forms.CharField(
         label="Usuário",
         max_length=25,
-        help_text="Obrigatório. Até 150 caracteres. Letras, dígitos e @/./+/-/_ apenas.",
+        help_text="Obrigatório. Até 25 caracteres. Letras, dígitos e @/./+/-/_ apenas.",
         validators=[UnicodeUsernameValidator(message="Informe um nome de usuário válido. Use apenas letras, números e @/./+/-/_")],
         widget=forms.TextInput(attrs={"placeholder": "Seu usuário"})
     )

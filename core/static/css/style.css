@@ -786,3 +786,9 @@ input.text-light::placeholder {
   transform: translateY(-50%);
   color: var(--muted);
 }
+
+.help-text {
+  color: #c2c2c2;
+  font-size: .875rem;
+  margin-top: 5px;
+}

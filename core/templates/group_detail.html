@@ -218,7 +218,7 @@
             Ver status da solicitação
           </a>
         {% else %}
-          <form action="{% url 'core:group_join_request' slug=group.slug %}" method="get" class="m-0">
+          <form action="{% url 'core:group_create_join_request' slug=group.slug %}" method="post" class="m-0">
             {% csrf_token %}
             <button type="submit" class="btn btn-warning">Solicitar entrada</button>
           </form>
